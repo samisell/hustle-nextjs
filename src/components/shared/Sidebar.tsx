@@ -13,6 +13,7 @@ import {
   GraduationCap,
   X,
   Lock,
+  Landmark,
   Settings,
   User,
   ChevronRight,
@@ -20,7 +21,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth';
 
-export type Page = 'dashboard' | 'courses' | 'referrals' | 'wallet' | 'investments' | 'notifications' | 'subscription' | 'escrow' | 'admin' | 'profile' | 'settings';
+export type Page = 'dashboard' | 'courses' | 'referrals' | 'wallet' | 'investments' | 'group-investments' | 'notifications' | 'subscription' | 'escrow' | 'admin' | 'profile' | 'settings';
 
 interface SidebarProps {
   activePage: Page;
@@ -35,6 +36,7 @@ const mainNavItems: { icon: React.ElementType; label: string; page: Page }[] = [
   { icon: Users, label: 'Passive Income', page: 'referrals' },
   { icon: Wallet, label: 'Wallet', page: 'wallet' },
   { icon: TrendingUp, label: 'Investments', page: 'investments' },
+  { icon: Landmark, label: 'Group Investments', page: 'group-investments' },
   { icon: CreditCard, label: 'Subscription', page: 'subscription' },
   { icon: Lock, label: 'Escrow', page: 'escrow' },
   { icon: Bell, label: 'Notifications', page: 'notifications' },

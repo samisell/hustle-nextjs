@@ -41,6 +41,10 @@ model User {
   commissionsGenerated  Commission[]           @relation("UserCommissionSource")
   payouts               Payout[]               @relation("UserPayouts")
   certifications        CourseCertification[]
+  dealContributions     DealContribution[]
+  dealVotes             DealVote[]
+  dealPayouts           DealPayout[]
+  createdDeals          InvestmentDeal[]     @relation("DealCreator")
 }
 
 model Subscription {
@@ -424,4 +428,105 @@ model CourseCertification {
   course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@unique([userId, courseId])
+}
+
+// ====================
+// GROUP INVESTMENT POOL
+// ====================
+
+model InvestmentCategory {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  icon        String   @default("TrendingUp") // lucide icon name
+  color       String   @default("#D4AF37") // hex color for display
+  image       String?  // URL to category image
+  order       Int      @default(0) // display order
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  deals InvestmentDeal[]
+}
+
+model InvestmentDeal {
+  id                String    @id @default(cuid())
+  categoryId        String?
+  title             String
+  description       String
+  longDescription   String?   // detailed markdown description
+  location          String?   // e.g. "Lagos, Nigeria", "Dubai, UAE"
+  minContribution   Float     @default(10)
+  maxContribution   Float?    // null = no max
+  targetAmount      Float     // total target pool
+  currentPool       Float     @default(0)
+  roiPercent        Float     // expected ROI percentage
+  duration          String    // e.g. "6 months", "1 year"
+  startDate         DateTime? // when deal becomes active
+  maturityDate      DateTime? // when deal matures / ends
+  votingDeadline    DateTime? // deadline for community voting
+  votesFor          Int       @default(0)
+  votesAgainst      Int       @default(0)
+  status            String    @default("proposed") // "proposed" | "voting" | "funding" | "active" | "matured" | "completed" | "cancelled"
+  imageUrl          String?
+  riskLevel         String    @default("medium") // "low" | "medium" | "high"
+  minVotes          Int       @default(10) // minimum votes needed to proceed
+  approvalThreshold Float     @default(0.6) // 60% approval needed (0-1)
+  createdBy         String
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  category     InvestmentCategory? @relation(fields: [categoryId], references: [id])
+  contributions DealContribution[]
+  votes        DealVote[]
+  payouts      DealPayout[]
+  creator      User                  @relation("DealCreator", fields: [createdBy], references: [id])
+}
+
+model DealVote {
+  id        String   @id @default(cuid())
+  dealId    String
+  userId    String
+  vote      String   // "for" | "against"
+  comment   String?
+  createdAt DateTime @default(now())
+
+  deal InvestmentDeal @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  user User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([dealId, userId])
+}
+
+model DealContribution {
+  id             String   @id @default(cuid())
+  dealId         String
+  userId         String
+  amount         Float
+  sharePercent   Float    @default(0) // percentage of total pool
+  expectedReturn Float    @default(0)
+  status         String   @default("confirmed") // "pending" | "confirmed" | "refunded"
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  deal InvestmentDeal @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  user User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([dealId, userId])
+}
+
+model DealPayout {
+  id          String    @id @default(cuid())
+  dealId      String
+  userId      String
+  amount      Float     // total payout (principal + profit)
+  principal   Float     // original contribution amount
+  profit      Float     // earnings from the deal
+  status      String    @default("pending") // "pending" | "processing" | "completed" | "failed"
+  processedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  deal InvestmentDeal @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  user User            @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

@@ -16,6 +16,7 @@ import CoursesPage from '@/components/dashboard/CoursesPage';
 import ReferralsPage from '@/components/dashboard/ReferralsPage';
 import WalletPage from '@/components/dashboard/WalletPage';
 import InvestmentsPage from '@/components/dashboard/InvestmentsPage';
+import GroupInvestmentsPage from '@/components/dashboard/GroupInvestmentsPage';
 import NotificationsPage from '@/components/dashboard/NotificationsPage';
 import SubscriptionPage from '@/components/dashboard/SubscriptionPage';
 import AdminPage from '@/components/dashboard/AdminPage';
@@ -140,6 +141,8 @@ export default function Home() {
         return <WalletPage />;
       case 'investments':
         return <InvestmentsPage />;
+      case 'group-investments':
+        return <GroupInvestmentsPage />;
       case 'notifications':
         return <NotificationsPage />;
       case 'subscription':

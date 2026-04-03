@@ -767,3 +767,102 @@ Stage Summary:
 - Courses filterable by skill category
 - Lessons expand/collapse with formatted content (headings, bold, bullets, blockquotes)
 - Lint passes clean, dev server returns 200
+
+---
+Task ID: 3
+Agent: group-investment-api-builder
+Task: Build Group Investment Pool API routes
+
+Work Log:
+- Created 7 API route files for the Group Investment Pool system
+- `/src/app/api/group-investments/route.ts` - GET lists all deals with category, vote counts, contribution counts, current pool, user's votes and contributions; supports ?status= and ?category= query filters. POST creates new deal (admin only), seeds 5 default categories if table is empty.
+- `/src/app/api/group-investments/categories/route.ts` - GET returns all active categories ordered by `order` with deal counts (public, seeds categories on first call). POST creates category with auto-generated slug from name (admin only).
+- `/src/app/api/group-investments/categories/[id]/route.ts` - PATCH updates category fields (admin only). DELETE removes category only if no active deals exist (admin only).
+- `/src/app/api/group-investments/[id]/route.ts` - GET returns full deal details with contributions (user name, amount, sharePercent), votes (user name, vote, comment), category, funding percentage, user's vote/contribution. PATCH updates deal fields including status lifecycle (admin only). DELETE cancels deal and refunds all confirmed contributions with wallet credit, transaction, earning, and notification records.
+- `/src/app/api/group-investments/[id]/vote/route.ts` - POST records vote (for/against) with upsert, validates deal is in "voting" status and deadline not passed, recalculates vote counts, auto-transitions to "funding" if threshold met, notifies user and all voters on approval.
+- `/src/app/api/group-investments/[id]/contribute/route.ts` - POST validates deal status (funding/active), min/max amounts, pool target limit, wallet balance, debits wallet, creates/upserts contribution, updates deal pool, recalculates all contributors' sharePercent, creates transaction and notification.
+- `/src/app/api/group-investments/[id]/distribute/route.ts` - POST (admin only) distributes profits for matured/active deals, calculates payout per contributor (principal + profit based on ROI%), creates DealPayout records, credits wallets, creates Earning and Transaction records, updates deal to "completed", notifies all contributors.
+
+Stage Summary:
+- All 7 API routes created and lint-passing with zero errors
+- Full deal lifecycle: proposed → voting → funding → active → matured → completed (or cancelled)
+- Auto-seeding of 5 default investment categories (Real Estate, Startups, Crypto, Agriculture, Crowdfunding)
+- Community voting with configurable thresholds and auto-transition to funding
+- Wallet-integrated contributions with share percentage recalculation
+- Profit distribution with per-contributor payout calculation and wallet crediting
+- Refund system on deal cancellation with full wallet/transaction/earning/notification trail
+
+---
+Task ID: 4
+Agent: group-investment-frontend-builder
+Task: Build GroupInvestmentsPage frontend component
+
+Work Log:
+- Created `/src/components/dashboard/GroupInvestmentsPage.tsx` (~750 lines) - Comprehensive Group Investment Pool page
+  - **Stats Row**: 4 StatCards (Total Pooled, Active Deals, My Contributions, My Earnings) computed from deal data
+  - **Category Filter Bar**: Horizontal scrollable pill buttons with category icons and deal counts, fetched from `/api/group-investments/categories`
+  - **Tab 1: Investment Deals** - Responsive grid (1/2/3 cols) of deal cards with:
+    - Category badge (colored), risk level badge (low=green, medium=amber, high=red), status badge (7 statuses)
+    - Title, truncated description, location with MapPin icon
+    - ROI (large, gold) and duration in stat boxes
+    - Funding progress bar with percentage
+    - Voting progress section for "voting" status deals (thumbs up/down with animated approval bar, days remaining)
+    - Contributor count, "Voted" indicator if user already voted
+    - Context-aware action buttons: Vote Now/Vote Again (voting), Contribute (funding/active), Pending Payout (matured), View Results (completed), Coming Soon (proposed)
+    - Framer Motion staggered animation and hover lift
+    - AnimatePresence for filter transitions
+  - **Tab 2: My Contributions** - Table with deal title, amount, share %, expected return, status badge, date; total row in tfoot
+  - **Tab 3: My Votes** - List of cards showing deal title, For/Against badge, vote date
+  - **Deal Detail Dialog**: Full deal info (description, location, metrics grid), funding progress, voting results with percentage bar, top contributors leaderboard (ranked, with share %), context-aware action button
+  - **Vote Dialog**: Deal summary with ROI/duration/risk, large tap-to-select Vote For (green) / Vote Against (red) buttons, optional comment textarea, submit with confirmation animation
+  - **Contribute Dialog**: Deal summary with funding progress, amount input with min/max validation, quick amount buttons ($10/$50/$100/$500/$1000), live expected return calculation in gold highlight, wallet balance display
+  - API integration: GET `/api/group-investments`, GET `/api/group-investments/categories`, POST `/api/group-investments/[id]/vote`, POST `/api/group-investments/[id]/contribute`
+  - Fallback demo data (4 deals, 5 categories) when API unavailable
+  - Toast notifications via `sonner` for vote/contribute actions
+  - Loading spinners, error handling with try/catch, responsive mobile-first design
+
+Stage Summary:
+- Full Group Investment Pool frontend created at `/src/components/dashboard/GroupInvestmentsPage.tsx`
+- 3-tab layout: Investment Deals, My Contributions, My Votes
+- 3 dialogs: Deal Detail, Vote, Contribute
+- Category filtering with animated transitions
+- Graceful fallback data when API unavailable
+- Lint passes clean with zero errors
+
+---
+Task ID: group-investment-pool
+Agent: Main Agent
+Task: Implement Group Investment Pool system with curated deals, crowdfunding, voting, and profit sharing
+
+Work Log:
+- Added 5 new Prisma models: InvestmentCategory, InvestmentDeal, DealVote, DealContribution, DealPayout
+- Added User relations: dealContributions, dealVotes, dealPayouts, createdDeals
+- Pushed schema to SQLite database successfully
+- Created 7 API route files for Group Investment Pool:
+  1. GET/POST /api/group-investments - List deals (with filtering), create deal (admin)
+  2. GET/POST /api/group-investments/categories - List/create investment categories
+  3. PATCH/DELETE /api/group-investments/categories/[id] - Update/delete categories (admin)
+  4. GET/PATCH/DELETE /api/group-investments/[id] - Deal detail, update, cancel+refund
+  5. POST /api/group-investments/[id]/vote - Community voting with auto-transition
+  6. POST /api/group-investments/[id]/contribute - Wallet-funded contributions
+  7. POST /api/group-investments/[id]/distribute - Admin profit distribution
+- Built comprehensive GroupInvestmentsPage (1333 lines) with:
+  - Stats row (Total Pooled, Active Deals, My Contributions, My Earnings)
+  - Category filter bar with 5 categories (Real Estate, Startups, Crypto, Agriculture, Crowdfunding)
+  - 3-tab layout: Investment Deals, My Contributions, My Votes
+  - Deal cards with category badges, risk levels, ROI, funding progress, voting progress
+  - Deal Detail dialog, Vote dialog (For/Against with comment), Contribute dialog
+  - Fallback demo data (4 sample deals) for graceful degradation
+- Updated Sidebar.tsx: Added Landmark icon, 'group-investments' page type, nav item
+- Updated page.tsx: Added GroupInvestmentsPage import and routing case
+- Updated Header.tsx: Added 'group-investments' page title
+- Auto-seeds 5 default categories on first API call
+- Lint passes clean with zero errors
+
+Stage Summary:
+- Complete Group Investment Pool system implemented
+- 5 Prisma models, 7 API routes, 1 comprehensive frontend page
+- Features: curated deals, category filtering, community voting, crowdfunding contributions, profit sharing
+- Deal lifecycle: proposed → voting → funding → active → matured → completed
+- All routes authenticated, admin routes protected
+- Dev server running with 200 status

@@ -29,6 +29,7 @@ const pageTitles: Record<Page, string> = {
   referrals: 'Passive Income',
   wallet: 'Wallet',
   investments: 'Investments',
+  'group-investments': 'Group Investments',
   notifications: 'Notifications',
   subscription: 'Subscription',
   admin: 'Admin Panel',
