@@ -115,12 +115,12 @@ export default function Home() {
     );
   }
 
-  // Auth pages
-  if (view === 'login') {
+  // Auth pages — skip if user is already authenticated (handles login/register redirect)
+  if (view === 'login' && !user) {
     return <LoginPage onBack={handleBack} onSwitchToRegister={handleRegister} />;
   }
 
-  if (view === 'register') {
+  if (view === 'register' && !user) {
     return <RegisterPage onBack={handleBack} onSwitchToLogin={handleLogin} />;
   }
 

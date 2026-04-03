@@ -60,6 +60,7 @@ export default function RegisterPage({ onBack, onSwitchToLogin }: RegisterPagePr
         return;
       }
 
+      // Auto-login on successful registration
       login(data.user, data.token);
     } catch {
       setError('Something went wrong. Please try again.');

@@ -35,6 +35,7 @@ export async function POST(req: NextRequest) {
         email: user.email,
         role: user.role,
         referralCode: user.referralCode,
+        emailVerified: user.emailVerified,
         subscription: user.subscription,
         wallet: user.wallet,
       },

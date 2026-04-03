@@ -6,6 +6,7 @@ export interface User {
   email: string;
   role: string;
   referralCode: string;
+  emailVerified?: string | null;
 }
 
 interface AuthState {

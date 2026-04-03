@@ -33,6 +33,7 @@ export async function POST(req: NextRequest) {
         password: hashedPassword,
         referralCode: newReferralCode,
         referredBy: referralCode || null,
+        emailVerified: new Date(),
       },
     });
 
@@ -105,6 +106,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // Auto-login: return token immediately
     const token = signToken({ userId: user.id, email: user.email, role: user.role });
 
     return NextResponse.json(
@@ -115,6 +117,7 @@ export async function POST(req: NextRequest) {
           email: user.email,
           role: user.role,
           referralCode: user.referralCode,
+          emailVerified: user.emailVerified,
         },
         token,
       },

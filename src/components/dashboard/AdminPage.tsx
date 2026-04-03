@@ -390,7 +390,40 @@ export default function AdminPage() {
     if (!token) return;
     try {
       const res = await fetch('/api/admin/stats', { headers: { Authorization: `Bearer ${token}` } });
-      if (res.ok) { setStats(await res.json()); return; }
+      if (res.ok) {
+        const data = await res.json();
+        // Map API response fields to match PlatformStats interface
+        setStats({
+          totalUsers: data.totalUsers ?? 0,
+          activeSubscriptions: data.activeSubscriptions ?? 0,
+          totalRevenue: data.totalRevenue ?? 0,
+          pendingWithdrawals: data.pendingWithdrawals ?? 0,
+          totalCourses: data.totalCourses ?? 0,
+          totalEnrollments: data.totalEnrollments ?? 0,
+          totalInvestments: data.totalInvestments ?? 0,
+          escrowHeld: data.totalEscrowHeld ?? 0,
+          monthlyRevenue: data.monthlyRevenue ?? [],
+          userGrowth: data.userGrowth ?? [],
+          subscriptionDist: (data.subscriptionDistribution ?? []).map((d: { plan: string; count: number }) => ({
+            name: d.plan.charAt(0).toUpperCase() + d.plan.slice(1),
+            value: d.count,
+          })),
+          topCourses: (data.topCourses ?? []).map((c: { title: string; enrollments: number }) => ({
+            title: c.title,
+            enrollments: c.enrollments,
+          })),
+          topReferrers: (data.topReferrers ?? []).map((r: { name: string; referralCount: number }) => ({
+            name: r.name,
+            referrals: r.referralCount,
+          })),
+          paymentBreakdown: {
+            flutterwave: data.paymentMethodBreakdown?.find((p: { method: string }) => p.method === 'flutterwave')?.amount ?? 0,
+            crypto: data.paymentMethodBreakdown?.find((p: { method: string }) => p.method === 'crypto')?.amount ?? 0,
+            wallet: data.paymentMethodBreakdown?.find((p: { method: string }) => p.method === 'wallet')?.amount ?? 0,
+          },
+        });
+        return;
+      }
     } catch { /* fallback */ }
     setStats(FALLBACK_STATS);
   };

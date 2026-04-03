@@ -8,18 +8,21 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  name         String
-  email        String   @unique
-  password     String
-  role         String   @default("user") // "user" | "admin"
-  referralCode String   @unique
-  referredBy   String?  // referral code of the person who referred this user
-  avatar       String?
-  bio          String?
-  phone        String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  password      String
+  role          String    @default("user") // "user" | "admin"
+  referralCode  String    @unique
+  referredBy    String?   // referral code of the person who referred this user
+  emailVerified DateTime? // when user verified email via OTP
+  otpCode       String?   // 6-digit OTP code for email verification
+  otpExpiry     DateTime? // OTP expiry timestamp
+  avatar        String?
+  bio           String?
+  phone         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   // Relations
   subscription     Subscription?

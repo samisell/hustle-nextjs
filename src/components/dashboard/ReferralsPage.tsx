@@ -387,7 +387,17 @@ export default function ReferralsPage() {
       });
       if (res.ok) {
         const data = await res.json();
-        setGrowth(data);
+        // Only update recentSignups if the API returns user objects with id field
+        // (API may return chart format { date, count } which lacks id)
+        const hasUserSignups = data.recentSignups?.length > 0 && data.recentSignups[0].id;
+        setGrowth((prev) => ({
+          totalNetwork: data.totalNetwork ?? prev.totalNetwork,
+          directReferrals: data.directReferrals ?? prev.directReferrals,
+          level2Count: data.level2Count ?? prev.level2Count,
+          level3Count: data.level3Count ?? prev.level3Count,
+          growthRate: data.growthRate ?? prev.growthRate,
+          recentSignups: hasUserSignups ? data.recentSignups : prev.recentSignups,
+        }));
         if (data.monthlyEarnings && data.monthlyEarnings.length > 0) {
           setChartData(data.monthlyEarnings);
           return;
@@ -1108,8 +1118,8 @@ export default function ReferralsPage() {
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {growth.recentSignups.map((signup) => (
-                              <TableRow key={signup.id}>
+                            {growth.recentSignups.map((signup, idx) => (
+                              <TableRow key={signup.id || `signup-${idx}-${signup.name}`}>
                                 <TableCell>
                                   <div className="flex items-center gap-2">
                                     <div className="flex h-7 w-7 items-center justify-center rounded-full bg-green-100 dark:bg-green-500/10 shrink-0">
