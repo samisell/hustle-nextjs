@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { verifyWebhookSignature } from '@/lib/cryptomus';
+import { distributeCommissions } from '@/lib/mlm';
 
 /**
  * POST /api/payments/crypto/webhook
@@ -94,6 +95,17 @@ export async function POST(req: NextRequest) {
 
       if (payment.paymentType === 'subscription' && metadata.plan) {
         await activateSubscription(payment.userId, metadata.plan);
+        // Distribute MLM commissions up the referral chain
+        try {
+          await distributeCommissions(
+            payment.userId,
+            payment.id,
+            payment.amount,
+            `${metadata.plan} subscription`
+          );
+        } catch (mlmError) {
+          console.error('[MLM Commission Error]', mlmError);
+        }
       } else if (payment.paymentType === 'wallet_funding') {
         await fundWallet(payment.userId, payment.amount);
       }

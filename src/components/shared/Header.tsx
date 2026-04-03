@@ -26,7 +26,7 @@ interface HeaderProps {
 const pageTitles: Record<Page, string> = {
   dashboard: 'Dashboard',
   courses: 'Courses',
-  referrals: 'Referrals',
+  referrals: 'Passive Income',
   wallet: 'Wallet',
   investments: 'Investments',
   notifications: 'Notifications',

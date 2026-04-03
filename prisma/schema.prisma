@@ -37,6 +37,9 @@ model User {
   escrowDisputesResolved EscrowDispute[]     @relation("DisputeResolver")
   approvedMilestones    EscrowMilestone[]    @relation("MilestoneApprover")
   userAchievements      UserAchievement[]
+  commissionsEarned     Commission[]           @relation("UserCommissions")
+  commissionsGenerated  Commission[]           @relation("UserCommissionSource")
+  payouts               Payout[]               @relation("UserPayouts")
 }
 
 model Subscription {
@@ -68,6 +71,7 @@ model Payment {
   createdAt               DateTime  @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  commissions Commission[]
 }
 
 model Course {
@@ -338,4 +342,46 @@ model UserAchievement {
   achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
 
   @@unique([userId, achievementId])
+}
+
+// ====================
+// MLM / PASSIVE INCOME SYSTEM
+// ====================
+
+model Commission {
+  id              String   @id @default(cuid())
+  userId          String   // the person who EARNS this commission
+  sourceUserId    String   // the user whose action generated this commission
+  paymentId       String?  // the payment that triggered this commission
+  level           Int      // MLM level: 1=direct, 2=indirect, 3=extended
+  amount          Float    // commission amount
+  percentage      Float    // commission percentage applied
+  status          String   @default("paid") // "paid" | "pending" | "reversed"
+  description     String?
+  createdAt       DateTime @default(now())
+
+  user User @relation("UserCommissions", fields: [userId], references: [id], onDelete: Cascade)
+  sourceUser User @relation("UserCommissionSource", fields: [sourceUserId], references: [id], onDelete: Cascade)
+  payment Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+}
+
+model Payout {
+  id              String   @id @default(cuid())
+  userId          String
+  amount          Float
+  method          String   // "bitcoin" | "usdt" | "bank_transfer"
+  currency        String   @default("USD") // "USD" | "USDT" | "BTC"
+  walletAddress   String?  // crypto wallet address
+  bankName        String?  // bank name for bank transfer
+  bankAccount     String?  // bank account number
+  bankAccountName String?  // account holder name
+  status          String   @default("pending") // "pending" | "processing" | "completed" | "failed" | "rejected"
+  txHash          String?  // blockchain transaction hash for crypto payouts
+  reference       String?  // bank transfer reference
+  processedAt     DateTime?
+  notes           String?  // admin notes
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user User @relation("UserPayouts", fields: [userId], references: [id], onDelete: Cascade)
 }

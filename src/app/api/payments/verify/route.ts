@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { verifyToken } from '@/lib/auth';
 import { verifyTransactionByRef } from '@/lib/flutterwave';
 import { getInvoiceInfo, isConfigured } from '@/lib/cryptomus';
+import { distributeCommissions } from '@/lib/mlm';
 
 /**
  * GET /api/payments/verify?tx_ref=xxx&method=flutterwave|crypto
@@ -212,6 +213,17 @@ async function processSuccessfulPayment(payment: any, gatewayTxId: string, gatew
 
   if (payment.paymentType === 'subscription' && metadata.plan) {
     await activateSubscription(payment.userId, metadata.plan);
+    // Distribute MLM commissions up the referral chain
+    try {
+      await distributeCommissions(
+        payment.userId,
+        payment.id,
+        payment.amount,
+        `${metadata.plan} subscription`
+      );
+    } catch (mlmError) {
+      console.error('[MLM Commission Error]', mlmError);
+    }
   }
 
   if (payment.paymentType === 'wallet_funding') {

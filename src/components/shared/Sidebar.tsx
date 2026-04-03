@@ -32,7 +32,7 @@ interface SidebarProps {
 const mainNavItems: { icon: React.ElementType; label: string; page: Page }[] = [
   { icon: LayoutDashboard, label: 'Dashboard', page: 'dashboard' },
   { icon: BookOpen, label: 'Courses', page: 'courses' },
-  { icon: Users, label: 'Referrals', page: 'referrals' },
+  { icon: Users, label: 'Passive Income', page: 'referrals' },
   { icon: Wallet, label: 'Wallet', page: 'wallet' },
   { icon: TrendingUp, label: 'Investments', page: 'investments' },
   { icon: CreditCard, label: 'Subscription', page: 'subscription' },
