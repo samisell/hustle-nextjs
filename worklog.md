@@ -177,3 +177,112 @@ Stage Summary:
 - Webhook endpoints: `/api/payments/webhook` (Flutterwave) and `/api/payments/crypto/webhook` (Cryptomus)
 - Universal verification at `/api/payments/verify?tx_ref=xxx&method=flutterwave|crypto`
 - All API keys stored securely in `.env`
+
+---
+## Task ID: 6 - escrow-api-builder
+### Work Task
+Build all escrow API routes for the Hustle University escrow system, covering escrow CRUD, contributions, fund release, refunds, cancellations, disputes, milestones, and expired escrow processing.
+
+### Work Summary
+All 11 escrow API route files have been created and linted successfully with zero errors. Also fixed a pre-existing syntax error in `src/lib/escrow.ts` (missing closing brace on line 115).
+
+#### Files Created
+
+1. **`/src/app/api/escrow/route.ts`** - Escrow list & create
+   - `GET /api/escrow` - Lists escrows. Admin view includes contributor/milestone/dispute counts; user view includes their specific contribution status. Supports `?status=` and `?type=` query filters. Returns `fundingPercentage` for each escrow.
+   - `POST /api/escrow` - Creates escrow (admin only). Validates title and targetAmount. Supports optional milestones with percentage validation (must sum to 100%). Delegates to `createEscrow()` from escrow lib.
+
+2. **`/src/app/api/escrow/[id]/route.ts`** - Escrow details
+   - `GET /api/escrow/[id]` - Returns full escrow with contributions (user name/email), milestones (with approver info), disputes (with raiser/resolver info), and funding percentage. Admin sees all contribution details; users see limited info plus their specific contribution.
+
+3. **`/src/app/api/escrow/[id]/contribute/route.ts`** - Contribute to escrow
+   - `POST /api/escrow/[id]/contribute` - Authenticated users can contribute. For `wallet` payment, directly debits via `contributeToEscrow()`. For `flutterwave`/`crypto`, creates a pending contribution in DB and returns a mock payment URL for frontend redirect.
+
+4. **`/src/app/api/escrow/[id]/release/route.ts`** - Release all funds
+   - `POST /api/escrow/[id]/release` - Admin only. Releases all funds proportionally to contributors (net of platform fees). Delegates to `releaseFunds()`.
+
+5. **`/src/app/api/escrow/[id]/refund/route.ts`** - Refund all contributions
+   - `POST /api/escrow/[id]/refund` - Admin only. Refunds all confirmed contributions to wallets. Delegates to `refundAllContributions()`.
+
+6. **`/src/app/api/escrow/[id]/cancel/route.ts`** - Cancel escrow
+   - `POST /api/escrow/[id]/cancel` - Admin only. Cancels escrow and auto-refunds all contributions. Delegates to `cancelEscrow()`.
+
+7. **`/src/app/api/escrow/[id]/disputes/route.ts`** - Raise dispute
+   - `POST /api/escrow/[id]/disputes` - Contributor only (must have confirmed contribution). Validates reason. Delegates to `raiseDispute()`.
+
+8. **`/src/app/api/escrow/[id]/disputes/[disputeId]/resolve/route.ts`** - Resolve dispute
+   - `POST /api/escrow/[id]/disputes/[disputeId]/resolve` - Admin only. Actions: `dismiss` (reverts escrow status), `refund` (refunds all), `release` (releases all). Delegates to `resolveDispute()`.
+
+9. **`/src/app/api/escrow/[id]/milestones/route.ts`** - Add milestone
+   - `POST /api/escrow/[id]/milestones` - Admin only. Validates title and positive percentage. Delegates to `createMilestone()`.
+
+10. **`/src/app/api/escrow/[id]/milestones/[milestoneId]/release/route.ts`** - Release milestone
+    - `POST /api/escrow/[id]/milestones/[milestoneId]/release` - Admin only. Releases milestone funds proportionally. Auto-updates escrow to `partially_released` or `released` if all milestones done. Delegates to `releaseMilestone()`.
+
+11. **`/src/app/api/escrow/process-expired/route.ts`** - Process expired escrows
+    - `POST /api/escrow/process-expired` - Admin only. Auto-refunds escrows past their funding deadline that didn't meet target. Delegates to `processExpiredEscrows()`.
+
+#### Bug Fix
+- Fixed pre-existing syntax error in `src/lib/escrow.ts` line 115: missing closing brace `}` for the `if (userTotal > effectiveMax)` block in `validateContribution()`.
+
+#### Design Decisions
+- All routes follow existing project patterns: `authenticate()` helper, `Authorization: Bearer <token>`, admin role checks returning 403
+- All errors returned as `{ error: "message" }` with proper HTTP status codes (200, 201, 400, 401, 403, 404, 500)
+- Error handling uses `error instanceof Error` pattern with unknown catch types
+- Business logic delegated to `src/lib/escrow.ts` utility functions — API routes handle auth, validation, and HTTP concerns only
+- Mock payment URLs returned for flutterwave/crypto contributions (actual gateway integration to be wired later)
+- Notifications are handled by the escrow lib functions; no duplicate notifications from API routes
+
+Stage Summary:
+- Complete escrow REST API with 11 route files covering full escrow lifecycle
+- Lint passes clean with zero errors
+- Dev server running successfully
+
+---
+Task ID: 7
+Agent: escrow-frontend-builder
+Task: Build EscrowPage and update AdminPage with escrow management
+
+Work Log:
+- Created `/src/components/dashboard/EscrowPage.tsx` — Full user-facing escrow browser page
+  - 3 tabs: Available Escrows, My Contributions, Disputes
+  - Available Escrows tab: card grid showing collecting escrows (clickable) and other escrows (read-only), with funding progress bars, deadline countdown, min contribution, contributor count
+  - My Contributions tab: table with escrow title, amount, status badge, date, and Raise Dispute button
+  - Disputes tab: list of dispute cards showing reason, evidence, status, resolution
+  - Contribute Dialog: payment method selector (Wallet/Card/Crypto), amount input with min/max validation, quick amount buttons ($10/$50/$100/$500), expected share calculation, Confirm Contribution button
+  - Raise Dispute Dialog: reason textarea (required), evidence textarea (optional), Submit Dispute button
+  - API calls: GET `/api/escrow`, POST `/api/escrow/[id]/contribute`, POST `/api/escrow/[id]/disputes`
+  - Fallback data when API fails for graceful degradation
+  - Status badge colors: collecting (amber), funded (green), active (blue), disputed (red), released (green), refunded/expired/cancelled (gray)
+  - Type badges: deal_funding (orange), investment_deal (gold), service_payment (blue), milestone (purple)
+
+- Updated `/src/components/dashboard/AdminPage.tsx` — Added Escrow management tab
+  - New tab "Escrow" with Lock icon
+  - Top action buttons: Create Escrow, Process Expired
+  - Stats row: Total Escrows, Active Escrows, Total Held in Escrow, Open Disputes (using StatCard component)
+  - Escrow Management Table: Title, Type, Status, Progress bar, Collected/Target, Contributors, Actions
+  - Action buttons per row based on status: View (all), Cancel (collecting), Release+Cancel (funded/active)
+  - Create Escrow Dialog: title, description, type selector, target amount, min/max contribution, fee %, funding deadline, release date, terms, milestones section with add/remove and percentage validation (must = 100%)
+  - View Escrow Detail Dialog: full escrow details grid, contributions table, milestones list with release buttons, disputes list with resolve options (Dismiss/Refund All/Release All), action buttons (Release All Funds, Refund All, Cancel Escrow)
+  - Confirmation Dialog: context-aware title/description for release/refund/cancel/process-expired with optional notes textarea
+  - Resolve Dispute Dialog: resolution textarea (required), confirm button
+  - API calls: POST `/api/escrow`, POST `/api/escrow/[id]/release|refund|cancel`, POST `/api/escrow/process-expired`, POST `/api/escrow/[id]/disputes/[disputeId]/resolve`, POST `/api/escrow/[id]/milestones/[milestoneId]/release`
+  - New icon imports: Lock, Gavel, Ban, RotateCcw, ChevronRight, DollarSign, AlertTriangle, Eye
+
+- Updated `/src/components/shared/Sidebar.tsx`
+  - Added `Lock` icon import
+  - Added `'escrow'` to `Page` type union
+  - Added `{ icon: Lock, label: 'Escrow', page: 'escrow' }` to navItems array
+
+- Updated `/src/app/page.tsx`
+  - Added `import EscrowPage from '@/components/dashboard/EscrowPage'`
+  - Added `case 'escrow': return <EscrowPage />` to renderActivePage switch
+
+Stage Summary:
+- EscrowPage provides full user-facing escrow browsing, contributing, and dispute management
+- AdminPage now has comprehensive escrow management with create, view, release, refund, cancel, milestone, and dispute resolution capabilities
+- Escrow page integrated into sidebar navigation and SPA router
+- All components use shadcn/ui, Framer Motion animations, gold/orange theme, responsive design
+- Fallback data provided for development without backend
+- Lint passes clean with zero errors
+- Dev server running successfully on localhost:3000

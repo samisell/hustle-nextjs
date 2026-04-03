@@ -13,11 +13,12 @@ import {
   GraduationCap,
   ChevronLeft,
   X,
+  Lock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth';
 
-export type Page = 'dashboard' | 'courses' | 'referrals' | 'wallet' | 'investments' | 'notifications' | 'subscription' | 'admin';
+export type Page = 'dashboard' | 'courses' | 'referrals' | 'wallet' | 'investments' | 'notifications' | 'subscription' | 'escrow' | 'admin';
 
 interface SidebarProps {
   activePage: Page;
@@ -34,6 +35,7 @@ const navItems: { icon: React.ElementType; label: string; page: Page }[] = [
   { icon: TrendingUp, label: 'Investments', page: 'investments' },
   { icon: Bell, label: 'Notifications', page: 'notifications' },
   { icon: CreditCard, label: 'Subscription', page: 'subscription' },
+  { icon: Lock, label: 'Escrow', page: 'escrow' },
 ];
 
 const adminItems: { icon: React.ElementType; label: string; page: Page }[] = [

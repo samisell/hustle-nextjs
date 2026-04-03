@@ -18,6 +18,7 @@ import InvestmentsPage from '@/components/dashboard/InvestmentsPage';
 import NotificationsPage from '@/components/dashboard/NotificationsPage';
 import SubscriptionPage from '@/components/dashboard/SubscriptionPage';
 import AdminPage from '@/components/dashboard/AdminPage';
+import EscrowPage from '@/components/dashboard/EscrowPage';
 
 type AppView = 'landing' | 'login' | 'register' | 'dashboard';
 
@@ -134,6 +135,8 @@ export default function Home() {
         return <NotificationsPage />;
       case 'subscription':
         return <SubscriptionPage />;
+      case 'escrow':
+        return <EscrowPage />;
       case 'admin':
         if (user.role === 'admin') return <AdminPage />;
         return <DashboardOverview />;

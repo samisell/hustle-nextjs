@@ -26,8 +26,13 @@ model User {
   investments   UserInvestment[]
   enrollments   Enrollment[]
   notifications Notification[]
-  payments      Payment[]
-  withdrawals   Withdrawal[]
+  payments              Payment[]
+  withdrawals           Withdrawal[]
+  escrowContributions   EscrowContribution[]
+  createdEscrows        EscrowTransaction[]  @relation("EscrowCreator")
+  escrowDisputesRaised  EscrowDispute[]      @relation("DisputeRaiser")
+  escrowDisputesResolved EscrowDispute[]     @relation("DisputeResolver")
+  approvedMilestones    EscrowMilestone[]    @relation("MilestoneApprover")
 }
 
 model Subscription {
@@ -215,4 +220,89 @@ model Notification {
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ====================
+// ESCROW SYSTEM MODELS
+// ====================
+
+model EscrowTransaction {
+  id              String   @id @default(cuid())
+  title           String
+  description     String?
+  type            String   @default("deal_funding") // "deal_funding" | "investment_deal" | "service_payment" | "milestone"
+  status          String   @default("collecting") // "collecting" | "funded" | "active" | "disputed" | "partially_released" | "released" | "refunded" | "cancelled" | "expired"
+  targetAmount    Float    // funding goal
+  collectedAmount Float    @default(0) // current total collected
+  currency        String   @default("USD")
+  feePercent      Float    @default(0) // platform fee percentage
+  minContribution Float    @default(1) // minimum contribution per user
+  maxContribution Float    @default(0) // 0 = no max
+  fundingDeadline DateTime? // deadline for reaching target
+  releaseDate     DateTime? // scheduled auto-release date
+  terms           String?  // escrow terms & conditions (JSON)
+  createdBy       String   // admin user id who created the escrow
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  contributions EscrowContribution[]
+  milestones   EscrowMilestone[]
+  disputes     EscrowDispute[]
+
+  creator User @relation("EscrowCreator", fields: [createdBy], references: [id])
+}
+
+model EscrowContribution {
+  id            String    @id @default(cuid())
+  escrowId      String
+  userId        String
+  amount        Float
+  paymentMethod String    @default("wallet") // "wallet" | "flutterwave" | "crypto"
+  status        String    @default("pending") // "pending" | "confirmed" | "refunded"
+  txRef         String?   @unique // payment transaction reference
+  paidAt        DateTime?
+  refundedAt    DateTime?
+  createdAt     DateTime  @default(now())
+
+  escrow EscrowTransaction @relation(fields: [escrowId], references: [id], onDelete: Cascade)
+  user   User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([escrowId, userId])
+}
+
+model EscrowMilestone {
+  id           String    @id @default(cuid())
+  escrowId     String
+  title        String
+  description  String?
+  order        Int       @default(0)
+  percentage   Float     // percentage of total funds to release (e.g., 50)
+  status       String    @default("pending") // "pending" | "approved" | "released" | "rejected"
+  approvedAt   DateTime?
+  releasedAt   DateTime?
+  approvedBy   String?   // admin user id
+  releaseNotes String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  escrow         EscrowTransaction @relation(fields: [escrowId], references: [id], onDelete: Cascade)
+  approvedByUser User?             @relation("MilestoneApprover", fields: [approvedBy], references: [id])
+}
+
+model EscrowDispute {
+  id          String    @id @default(cuid())
+  escrowId    String
+  raisedById  String
+  reason      String
+  evidence    String?   // JSON string with evidence details
+  status      String    @default("open") // "open" | "investigating" | "resolved" | "dismissed"
+  resolution  String?
+  resolvedBy  String?   // admin user id
+  resolvedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  escrow    EscrowTransaction @relation(fields: [escrowId], references: [id], onDelete: Cascade)
+  raisedBy  User              @relation("DisputeRaiser", fields: [raisedById], references: [id])
+  resolver  User?             @relation("DisputeResolver", fields: [resolvedBy], references: [id])
 }
