@@ -125,3 +125,30 @@ All 17 frontend component files have been created and linted with zero errors. T
 - All API calls use `fetch('/api/...')` with `Authorization: Bearer ${token}` header
 - Fallback data for all pages when API calls fail (graceful degradation)
 - Loading states with spinner animations throughout
+
+---
+Task ID: 4
+Agent: Main Agent
+Task: Implement Flutterwave payment gateway integration
+
+Work Log:
+- Updated `.env` with Flutterwave API keys (PUBLIC_KEY, SECRET_KEY, WEBHOOK_SECRET, ENCRYPTION_KEY, APP_URL)
+- Updated Prisma schema: added `txRef`, `flutterwaveTransactionId`, `paymentType`, `metadata`, `paidAt` fields to Payment model
+- Pushed schema to SQLite database successfully
+- Created `src/lib/flutterwave.ts` - Flutterwave utility library with functions for payment initialization, transaction verification (by ID and reference), webhook signature verification, and helper functions
+- Created `src/app/api/payments/initialize/route.ts` - POST endpoint for initializing Flutterwave payments (supports both subscription and wallet_funding types, validates amounts, creates pending payment records, returns Flutterwave payment link)
+- Created `src/app/api/payments/verify/route.ts` - GET endpoint for verifying payment status by tx_ref, with automatic subscription activation and wallet funding on confirmed payments
+- Created `src/app/api/payments/webhook/route.ts` - POST webhook handler for Flutterwave payment callbacks with signature verification and double-verification with Flutterwave API; also GET for endpoint verification during setup
+- Updated `src/app/api/subscription/route.ts` - Enhanced GET endpoint to return additional payment fields (paymentMethod, paymentType, txRef, paidAt)
+- Updated `src/components/dashboard/SubscriptionPage.tsx` - Complete rewrite with Flutterwave integration: payment verification on return from Flutterwave checkout, plan selection dialog with secure payment info, Flutterwave branded badges, enhanced payment history showing payment method and status
+- Updated `src/components/dashboard/WalletPage.tsx` - Added "Fund Wallet" feature via Flutterwave with quick amount buttons ($10-$500), secure payment info, verification on return from checkout
+- Fixed lint error (replaced `require('crypto')` with ES module `import crypto from 'crypto'`)
+- Lint passes clean, dev server running with 200 status
+
+Stage Summary:
+- Flutterwave is now the payment gateway for subscriptions and wallet funding
+- Payment flow: User selects plan/amount → Backend initializes Flutterwave transaction → User redirected to Flutterwave checkout → Payment completed → Webhook callback processes payment (or frontend verification) → Subscription activated / Wallet funded
+- Webhook endpoint at `/api/payments/webhook` for real-time payment confirmation
+- Frontend verification at `/api/payments/verify?tx_ref=xxx` as backup
+- All API keys stored securely in `.env` file
+- Payment records track full lifecycle: pending → completed/failed with Flutterwave transaction IDs

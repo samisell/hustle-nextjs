@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
   CreditCard,
@@ -9,6 +9,10 @@ import {
   Crown,
   Zap,
   Loader2,
+  Shield,
+  Lock,
+  ExternalLink,
+  Landmark,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -30,6 +34,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import PageWrapper from '@/components/shared/PageWrapper';
 import { useAuthStore } from '@/store/auth';
 
@@ -45,7 +50,11 @@ interface Payment {
   amount: number;
   status: string;
   description: string;
+  paymentMethod: string;
+  paymentType: string;
+  txRef: string;
   createdAt: string;
+  paidAt: string | null;
 }
 
 const plans = [
@@ -106,11 +115,26 @@ export default function SubscriptionPage() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [planDialogOpen, setPlanDialogOpen] = useState(false);
-  const [switching, setSwitching] = useState(false);
+  const [paying, setPaying] = useState(false);
+  const [verifying, setVerifying] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [paymentError, setPaymentError] = useState('');
+  const [paymentSuccess, setPaymentSuccess] = useState('');
 
   useEffect(() => {
     fetchSubscription();
+  }, [token]);
+
+  // Check for payment callback in URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const txRef = params.get('tx_ref');
+    if (txRef && token) {
+      setVerifying(true);
+      verifyPayment(txRef);
+      // Clean URL
+      window.history.replaceState({}, '', window.location.pathname);
+    }
   }, [token]);
 
   const fetchSubscription = async () => {
@@ -125,7 +149,7 @@ export default function SubscriptionPage() {
         setPayments(data.payments || []);
       }
     } catch {
-      // fallback
+      // fallback data for demo
       setSubscription({
         plan: 'pro',
         status: 'active',
@@ -133,35 +157,69 @@ export default function SubscriptionPage() {
         endDate: '2024-04-01',
       });
       setPayments([
-        { id: '1', amount: 29.99, status: 'completed', description: 'Pro Plan - Monthly', createdAt: '2024-03-01' },
-        { id: '2', amount: 29.99, status: 'completed', description: 'Pro Plan - Monthly', createdAt: '2024-02-01' },
-        { id: '3', amount: 9.99, status: 'completed', description: 'Basic Plan - Monthly', createdAt: '2024-01-01' },
+        { id: '1', amount: 29.99, status: 'completed', description: 'Pro Plan - Monthly', paymentMethod: 'flutterwave', paymentType: 'subscription', txRef: 'SUB-DEMO001', createdAt: '2024-03-01', paidAt: '2024-03-01T12:00:00Z' },
+        { id: '2', amount: 29.99, status: 'completed', description: 'Pro Plan - Monthly', paymentMethod: 'flutterwave', paymentType: 'subscription', txRef: 'SUB-DEMO002', createdAt: '2024-02-01', paidAt: '2024-02-01T12:00:00Z' },
+        { id: '3', amount: 9.99, status: 'completed', description: 'Basic Plan - Monthly', paymentMethod: 'flutterwave', paymentType: 'subscription', txRef: 'SUB-DEMO003', createdAt: '2024-01-01', paidAt: '2024-01-01T12:00:00Z' },
       ]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSwitchPlan = async () => {
-    if (!selectedPlan) return;
-    setSwitching(true);
+  const verifyPayment = useCallback(async (txRef: string) => {
+    if (!token) return;
     try {
-      const res = await fetch('/api/subscription/switch', {
+      const res = await fetch(`/api/payments/verify?tx_ref=${txRef}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.status === 'completed') {
+          setPaymentSuccess('Payment successful! Your subscription has been activated.');
+          fetchSubscription();
+        } else {
+          setPaymentError('Payment verification failed. Please contact support if you were charged.');
+        }
+      }
+    } catch {
+      setPaymentError('Could not verify payment. Please check your subscription status.');
+    } finally {
+      setVerifying(false);
+    }
+  }, [token]);
+
+  const handleSubscribe = async () => {
+    if (!selectedPlan || !token) return;
+
+    setPaying(true);
+    setPaymentError('');
+    setPaymentSuccess('');
+
+    try {
+      const res = await fetch('/api/payments/initialize', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ plan: selectedPlan }),
+        body: JSON.stringify({
+          type: 'subscription',
+          plan: selectedPlan,
+        }),
       });
-      if (res.ok) {
-        setPlanDialogOpen(false);
-        fetchSubscription();
+
+      const data = await res.json();
+
+      if (res.ok && data.paymentLink) {
+        // Redirect to Flutterwave checkout
+        window.location.href = data.paymentLink;
+      } else {
+        setPaymentError(data.error || 'Failed to initialize payment.');
       }
     } catch {
-      // silent fail
+      setPaymentError('Something went wrong. Please try again.');
     } finally {
-      setSwitching(false);
+      setPaying(false);
     }
   };
 
@@ -169,6 +227,51 @@ export default function SubscriptionPage() {
 
   return (
     <PageWrapper title="Subscription" description="Manage your subscription plan and billing.">
+      {/* Payment verification status */}
+      {verifying && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="mb-6"
+        >
+          <Alert className="border-gold/30 bg-gold/5">
+            <Loader2 className="h-4 w-4 animate-spin text-gold" />
+            <AlertDescription className="text-gold">
+              Verifying your payment... Please wait.
+            </AlertDescription>
+          </Alert>
+        </motion.div>
+      )}
+
+      {paymentSuccess && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6"
+        >
+          <Alert className="border-green-300 bg-green-50">
+            <Check className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-800">
+              {paymentSuccess}
+            </AlertDescription>
+          </Alert>
+        </motion.div>
+      )}
+
+      {paymentError && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6"
+        >
+          <Alert className="border-red-300 bg-red-50">
+            <AlertDescription className="text-red-800">
+              {paymentError}
+            </AlertDescription>
+          </Alert>
+        </motion.div>
+      )}
+
       {/* Current Plan */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -207,13 +310,30 @@ export default function SubscriptionPage() {
               </div>
               <Button
                 className="bg-gold text-white hover:bg-gold-dark"
-                onClick={() => setPlanDialogOpen(true)}
+                onClick={() => {
+                  setPaymentError('');
+                  setPaymentSuccess('');
+                  setPlanDialogOpen(true);
+                }}
               >
                 {subscription.status === 'active' ? 'Change Plan' : 'Subscribe Now'}
               </Button>
             </div>
           </CardContent>
         </Card>
+      </motion.div>
+
+      {/* Secure Payment Badge */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.2 }}
+      >
+        <div className="flex items-center justify-center gap-2 py-2 text-sm text-muted-foreground">
+          <Shield className="h-4 w-4 text-green-500" />
+          <span>Secured by Flutterwave</span>
+          <Lock className="h-3 w-3" />
+        </div>
       </motion.div>
 
       {/* Available Plans */}
@@ -268,6 +388,8 @@ export default function SubscriptionPage() {
                       disabled={isCurrent}
                       onClick={() => {
                         setSelectedPlan(plan.id);
+                        setPaymentError('');
+                        setPaymentSuccess('');
                         setPlanDialogOpen(true);
                       }}
                     >
@@ -285,6 +407,7 @@ export default function SubscriptionPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Payment History</CardTitle>
+          <CardDescription>Track all your subscription payments</CardDescription>
         </CardHeader>
         <CardContent>
           {payments.length === 0 ? (
@@ -298,6 +421,7 @@ export default function SubscriptionPage() {
                   <TableRow>
                     <TableHead>Description</TableHead>
                     <TableHead>Date</TableHead>
+                    <TableHead>Method</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Amount</TableHead>
                   </TableRow>
@@ -310,9 +434,25 @@ export default function SubscriptionPage() {
                         {new Date(p.createdAt).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
+                        <div className="flex items-center gap-1.5">
+                          {p.paymentMethod === 'flutterwave' ? (
+                            <Badge variant="outline" className="text-xs font-normal bg-green-50 text-green-700 border-green-200">
+                              <Landmark className="h-3 w-3 mr-1" />
+                              Flutterwave
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-xs font-normal">
+                              {p.paymentMethod}
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
                         <Badge className={
                           p.status === 'completed'
                             ? 'bg-green-100 text-green-700 border-green-200'
+                            : p.status === 'failed'
+                            ? 'bg-red-100 text-red-700 border-red-200'
                             : 'bg-amber-100 text-amber-700 border-amber-200'
                         } variant="outline">
                           {p.status}
@@ -328,21 +468,25 @@ export default function SubscriptionPage() {
         </CardContent>
       </Card>
 
-      {/* Plan Switch Dialog */}
+      {/* Plan Selection Dialog with Payment */}
       <Dialog open={planDialogOpen} onOpenChange={setPlanDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Switch Plan</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5 text-gold" />
+              Subscribe to Plan
+            </DialogTitle>
             <DialogDescription>
-              {selectedPlan && `You are switching to the ${selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)} plan ($${plans.find(p => p.id === selectedPlan)?.price}/month).`}
+              You will be redirected to Flutterwave to complete your payment securely.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             {selectedPlan && (
               <div className="rounded-lg bg-muted/50 p-4">
                 <h4 className="font-medium capitalize">{selectedPlan} Plan</h4>
-                <p className="text-sm text-muted-foreground mt-1">
-                  ${plans.find(p => p.id === selectedPlan)?.price}/month &bull; Cancel anytime
+                <p className="text-2xl font-bold text-gold mt-1">
+                  ${plans.find(p => p.id === selectedPlan)?.price}
+                  <span className="text-sm font-normal text-muted-foreground">/month</span>
                 </p>
                 <ul className="mt-3 space-y-1">
                   {plans.find(p => p.id === selectedPlan)?.features.slice(0, 3).map((f) => (
@@ -354,18 +498,43 @@ export default function SubscriptionPage() {
                 </ul>
               </div>
             )}
+
+            {/* Payment info */}
+            <div className="rounded-lg border border-muted p-3">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Shield className="h-4 w-4 text-green-500" />
+                <span>Payments processed securely via Flutterwave</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                <Lock className="h-4 w-4" />
+                <span>256-bit SSL encrypted</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                <ExternalLink className="h-4 w-4" />
+                <span>Pay with card, bank transfer, or mobile money</span>
+              </div>
+            </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-0">
             <Button variant="outline" onClick={() => setPlanDialogOpen(false)}>
               Cancel
             </Button>
             <Button
               className="bg-gold text-white hover:bg-gold-dark"
-              onClick={handleSwitchPlan}
-              disabled={switching}
+              onClick={handleSubscribe}
+              disabled={paying}
             >
-              {switching && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {switching ? 'Processing...' : 'Confirm Switch'}
+              {paying ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Initializing...
+                </>
+              ) : (
+                <>
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  Pay ${selectedPlan ? plans.find(p => p.id === selectedPlan)?.price : '0'}
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -44,14 +44,19 @@ model Subscription {
 }
 
 model Payment {
-  id            String   @id @default(cuid())
-  userId        String
-  amount        Float
-  currency      String   @default("USD")
-  status        String   @default("pending") // "pending" | "completed" | "failed"
-  paymentMethod String   @default("mock") // "mock" | "card" | "bank"
-  description   String?
-  createdAt     DateTime @default(now())
+  id                      String    @id @default(cuid())
+  userId                  String
+  amount                  Float
+  currency                String    @default("USD")
+  status                  String    @default("pending") // "pending" | "completed" | "failed"
+  paymentMethod           String    @default("flutterwave") // "mock" | "flutterwave" | "card" | "bank"
+  description             String?
+  txRef                   String?   @unique // Flutterwave transaction reference
+  flutterwaveTransactionId String?  // Flutterwave transaction ID from callback
+  paymentType             String?   // "subscription" | "wallet_funding"
+  metadata                String?   // JSON string for additional data (plan, etc.)
+  paidAt                  DateTime? // when payment was confirmed
+  createdAt               DateTime  @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

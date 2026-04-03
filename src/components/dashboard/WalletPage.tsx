@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
   Wallet,
@@ -10,6 +10,11 @@ import {
   DollarSign,
   Loader2,
   Send,
+  Plus,
+  Shield,
+  Lock,
+  ExternalLink,
+  CreditCard,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -33,6 +38,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import PageWrapper from '@/components/shared/PageWrapper';
 import EmptyState from '@/components/shared/EmptyState';
 import { useAuthStore } from '@/store/auth';
@@ -45,19 +51,37 @@ interface Transaction {
   createdAt: string;
 }
 
+const FUND_AMOUNTS = [10, 25, 50, 100, 250, 500];
+
 export default function WalletPage() {
   const token = useAuthStore((s) => s.token);
   const [balance, setBalance] = useState(0);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
+  const [fundDialogOpen, setFundDialogOpen] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [withdrawAddress, setWithdrawAddress] = useState('');
+  const [fundAmount, setFundAmount] = useState('');
   const [withdrawing, setWithdrawing] = useState(false);
+  const [funding, setFunding] = useState(false);
+  const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState('');
+  const [paymentSuccess, setPaymentSuccess] = useState('');
 
   useEffect(() => {
     fetchWallet();
+  }, [token]);
+
+  // Check for wallet funding callback
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const txRef = params.get('tx_ref');
+    if (txRef && token) {
+      setVerifying(true);
+      verifyWalletFunding(txRef);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
   }, [token]);
 
   const fetchWallet = async () => {
@@ -83,6 +107,74 @@ export default function WalletPage() {
       ]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const verifyWalletFunding = useCallback(async (txRef: string) => {
+    if (!token) return;
+    try {
+      const res = await fetch(`/api/payments/verify?tx_ref=${txRef}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.status === 'completed') {
+          setPaymentSuccess('Wallet funded successfully!');
+          fetchWallet();
+        } else {
+          setError('Funding verification failed. Please contact support if you were charged.');
+        }
+      }
+    } catch {
+      setError('Could not verify funding. Please check your wallet balance.');
+    } finally {
+      setVerifying(false);
+    }
+  }, [token]);
+
+  const handleFundWallet = async () => {
+    const amount = parseFloat(fundAmount);
+    if (!amount || amount <= 0) {
+      setError('Please enter a valid amount.');
+      return;
+    }
+    if (amount < 5) {
+      setError('Minimum funding amount is $5.');
+      return;
+    }
+    if (amount > 10000) {
+      setError('Maximum funding amount is $10,000.');
+      return;
+    }
+
+    setFunding(true);
+    setError('');
+
+    try {
+      const res = await fetch('/api/payments/initialize', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'wallet_funding',
+          amount,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.paymentLink) {
+        // Redirect to Flutterwave checkout
+        window.location.href = data.paymentLink;
+      } else {
+        setError(data.error || 'Failed to initialize payment.');
+      }
+    } catch {
+      setError('Something went wrong. Please try again.');
+    } finally {
+      setFunding(false);
     }
   };
 
@@ -134,6 +226,43 @@ export default function WalletPage() {
 
   return (
     <PageWrapper title="Wallet" description="Manage your funds, view transactions, and withdraw earnings.">
+      {/* Verification / Success / Error alerts */}
+      {verifying && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-6">
+          <Alert className="border-gold/30 bg-gold/5">
+            <Loader2 className="h-4 w-4 animate-spin text-gold" />
+            <AlertDescription className="text-gold">
+              Verifying your wallet funding... Please wait.
+            </AlertDescription>
+          </Alert>
+        </motion.div>
+      )}
+
+      {paymentSuccess && (
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
+          <Alert className="border-green-300 bg-green-50">
+            <ArrowDownRight className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-800">{paymentSuccess}</AlertDescription>
+          </Alert>
+        </motion.div>
+      )}
+
+      {error && (
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
+          <Alert className="border-red-300 bg-red-50">
+            <AlertDescription className="text-red-800">{error}</AlertDescription>
+          </Alert>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mt-1 text-red-600 hover:text-red-800"
+            onClick={() => setError('')}
+          >
+            Dismiss
+          </Button>
+        </motion.div>
+      )}
+
       {/* Balance Card */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -147,11 +276,31 @@ export default function WalletPage() {
                 <p className="mt-1 text-4xl font-bold text-foreground tracking-tight">
                   {formatCurrency(balance)}
                 </p>
+                <div className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Shield className="h-3 w-3 text-green-500" />
+                  <span>Secured payments via Flutterwave</span>
+                </div>
               </div>
               <div className="flex gap-3">
                 <Button
                   className="bg-gold text-white hover:bg-gold-dark"
-                  onClick={() => setWithdrawDialogOpen(true)}
+                  onClick={() => {
+                    setError('');
+                    setPaymentSuccess('');
+                    setFundDialogOpen(true);
+                  }}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Fund Wallet
+                </Button>
+                <Button
+                  variant="outline"
+                  className="border-gold/30 text-gold hover:bg-gold/5"
+                  onClick={() => {
+                    setError('');
+                    setPaymentSuccess('');
+                    setWithdrawDialogOpen(true);
+                  }}
                 >
                   <Send className="mr-2 h-4 w-4" />
                   Withdraw
@@ -270,6 +419,98 @@ export default function WalletPage() {
         </CardContent>
       </Card>
 
+      {/* Fund Wallet Dialog */}
+      <Dialog open={fundDialogOpen} onOpenChange={setFundDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="h-5 w-5 text-gold" />
+              Fund Wallet
+            </DialogTitle>
+            <DialogDescription>
+              Add funds to your wallet securely via Flutterwave.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Current Balance</Label>
+              <p className="text-2xl font-bold text-gold">{formatCurrency(balance)}</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="fundAmount">Amount (USD)</Label>
+              <Input
+                id="fundAmount"
+                type="number"
+                placeholder="0.00"
+                min="5"
+                max="10000"
+                step="0.01"
+                value={fundAmount}
+                onChange={(e) => setFundAmount(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">Minimum $5, Maximum $10,000</p>
+            </div>
+
+            {/* Quick amount buttons */}
+            <div className="space-y-2">
+              <Label>Quick Amount</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {FUND_AMOUNTS.map((amt) => (
+                  <Button
+                    key={amt}
+                    variant={fundAmount === String(amt) ? 'default' : 'outline'}
+                    className={fundAmount === String(amt) ? 'bg-gold text-white hover:bg-gold-dark' : ''}
+                    size="sm"
+                    onClick={() => setFundAmount(String(amt))}
+                  >
+                    ${amt}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Payment info */}
+            <div className="rounded-lg border border-muted p-3">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Shield className="h-4 w-4 text-green-500" />
+                <span>Secured by Flutterwave</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                <Lock className="h-4 w-4" />
+                <span>256-bit SSL encrypted</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                <ExternalLink className="h-4 w-4" />
+                <span>Card, bank transfer, mobile money</span>
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setFundDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-gold text-white hover:bg-gold-dark"
+              onClick={handleFundWallet}
+              disabled={funding}
+            >
+              {funding ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Initializing...
+                </>
+              ) : (
+                <>
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  Fund {fundAmount ? formatCurrency(parseFloat(fundAmount) || 0) : ''}
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Withdraw Dialog */}
       <Dialog open={withdrawDialogOpen} onOpenChange={setWithdrawDialogOpen}>
         <DialogContent>
@@ -280,11 +521,6 @@ export default function WalletPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            {error && (
-              <div className="rounded-lg border border-destructive/50 bg-destructive/5 p-3 text-sm text-destructive">
-                {error}
-              </div>
-            )}
             <div className="space-y-2">
               <Label>Available Balance</Label>
               <p className="text-2xl font-bold text-gold">{formatCurrency(balance)}</p>

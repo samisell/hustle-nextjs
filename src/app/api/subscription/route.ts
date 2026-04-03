@@ -31,7 +31,11 @@ export async function GET(req: NextRequest) {
       amount: p.amount,
       status: p.status,
       description: p.description || '',
+      paymentMethod: p.paymentMethod,
+      paymentType: p.paymentType,
+      txRef: p.txRef,
       createdAt: p.createdAt.toISOString(),
+      paidAt: p.paidAt?.toISOString() || null,
     }));
 
     const formattedSubscription = subscription ? {
