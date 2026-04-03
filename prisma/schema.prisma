@@ -45,6 +45,12 @@ model User {
   dealVotes             DealVote[]
   dealPayouts           DealPayout[]
   createdDeals          InvestmentDeal[]     @relation("DealCreator")
+  forumTopics            ForumTopic[]          @relation("ForumTopicAuthor")
+  forumReplies           ForumReply[]          @relation("ForumReplyAuthor")
+  chatMemberships        ConversationMember[]  @relation("ChatMember")
+  chatMessages           ChatMessage[]         @relation("ChatMessageAuthor")
+  qaQuestions            QAQuestion[]          @relation("QAQuestionAuthor")
+  hostedQASessions       QASession[]           @relation("QAHost")
 }
 
 model Subscription {
@@ -529,4 +535,128 @@ model DealPayout {
 
   deal InvestmentDeal @relation(fields: [dealId], references: [id], onDelete: Cascade)
   user User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ====================
+// COMMUNITY & SOCIAL FEATURES
+// ====================
+
+// FORUM SYSTEM
+model ForumCategory {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  icon        String   @default("MessageSquare")
+  color       String   @default("#D4AF37")
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  topics ForumTopic[]
+}
+
+model ForumTopic {
+  id           String   @id @default(cuid())
+  categoryId   String?
+  userId       String
+  title        String
+  content      String
+  tags         String?  // JSON array of tag strings
+  isPinned     Boolean  @default(false)
+  isLocked     Boolean  @default(false)
+  replyCount   Int      @default(0)
+  lastReplyAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  category ForumCategory? @relation(fields: [categoryId], references: [id])
+  author   User           @relation("ForumTopicAuthor", fields: [userId], references: [id])
+  replies  ForumReply[]
+}
+
+model ForumReply {
+  id        String   @id @default(cuid())
+  topicId   String
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  topic  ForumTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  author User       @relation("ForumReplyAuthor", fields: [userId], references: [id])
+}
+
+// PRIVATE CHAT
+model Conversation {
+  id            String   @id @default(cuid())
+  name          String?  // group chat name
+  isGroup       Boolean  @default(false)
+  lastMessageAt DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  members  ConversationMember[]
+  messages ChatMessage[]
+}
+
+model ConversationMember {
+  id             String   @id @default(cuid())
+  conversationId String
+  userId         String
+  joinedAt       DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user           User           @relation("ChatMember", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+}
+
+model ChatMessage {
+  id             String   @id @default(cuid())
+  conversationId String
+  userId         String
+  content        String
+  isRead         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  author         User           @relation("ChatMessageAuthor", fields: [userId], references: [id])
+}
+
+// LIVE Q&A / AMA SESSIONS
+model QASession {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  expertName  String
+  expertBio   String?
+  expertTitle String?
+  scheduledAt DateTime
+  duration    Int      @default(60) // minutes
+  status      String   @default("upcoming") // "upcoming" | "live" | "ended"
+  hostId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  questions QAQuestion[]
+  host      User @relation("QAHost", fields: [hostId], references: [id])
+}
+
+model QAQuestion {
+  id          String   @id @default(cuid())
+  sessionId   String
+  userId      String
+  content     String
+  upvotes     Int      @default(0)
+  upvoterIds  String?  // JSON array of user IDs who upvoted
+  isAnswered  Boolean  @default(false)
+  answer      String?
+  answeredAt  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  session QASession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  author  User       @relation("QAQuestionAuthor", fields: [userId], references: [id])
 }

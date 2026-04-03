@@ -34,6 +34,7 @@ const pageTitles: Record<Page, string> = {
   subscription: 'Subscription',
   admin: 'Admin Panel',
   escrow: 'Escrow',
+  community: 'Community Hub',
   profile: 'My Profile',
   settings: 'Settings',
 };

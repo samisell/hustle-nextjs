@@ -17,11 +17,12 @@ import {
   Settings,
   User,
   ChevronRight,
+  MessageCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth';
 
-export type Page = 'dashboard' | 'courses' | 'referrals' | 'wallet' | 'investments' | 'group-investments' | 'notifications' | 'subscription' | 'escrow' | 'admin' | 'profile' | 'settings';
+export type Page = 'dashboard' | 'courses' | 'referrals' | 'wallet' | 'investments' | 'group-investments' | 'community' | 'notifications' | 'subscription' | 'escrow' | 'admin' | 'profile' | 'settings';
 
 interface SidebarProps {
   activePage: Page;
@@ -39,6 +40,7 @@ const mainNavItems: { icon: React.ElementType; label: string; page: Page }[] = [
   { icon: Landmark, label: 'Group Investments', page: 'group-investments' },
   { icon: CreditCard, label: 'Subscription', page: 'subscription' },
   { icon: Lock, label: 'Escrow', page: 'escrow' },
+  { icon: MessageCircle, label: 'Community', page: 'community' },
   { icon: Bell, label: 'Notifications', page: 'notifications' },
 ];
 

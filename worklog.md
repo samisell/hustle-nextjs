@@ -866,3 +866,90 @@ Stage Summary:
 - Deal lifecycle: proposed → voting → funding → active → matured → completed
 - All routes authenticated, admin routes protected
 - Dev server running with 200 status
+
+---
+Task ID: community-frontend
+Agent: community-frontend-builder
+Task: Build CommunityPage frontend component
+
+Work Log:
+- Created comprehensive CommunityPage.tsx (~1100 lines) with 4 tabs: Leaderboard, Forums, Messages, AMAs
+- Tab 1 (Leaderboard): Top 3 podium cards with Crown/Trophy icons and gradient backgrounds, remaining ranks 4-20 in scrollable table, "My Ranking" card with gold border
+- Tab 2 (Forums): Category filter pills, "New Topic" button, Create Topic dialog (title, content, category, tags), topic cards with category badges/pinned/locked indicators, Topic Detail dialog with full content, reply list, and reply textarea
+- Tab 3 (Messages): Split layout (conversation list + chat area), responsive mobile view with back button, New Conversation dialog with user search, sent/received message bubbles (gold/muted), Enter to send, 5-second polling for new messages
+- Tab 4 (AMAs): Live/Upcoming/Past sections, session cards with status badges (live=pulsing red), Ask Question dialog, View Session dialog with expert info, question list sorted by upvotes, toggle upvote, answered questions with green check
+- Added MessageCircle icon import and community page to Sidebar navigation
+- Added CommunityPage import and route case to page.tsx SPA router
+- All API calls with Bearer token auth and fallback data for graceful degradation
+- Framer Motion animations on cards, staggered lists, podium
+- Toast notifications for all actions (create topic, post reply, send message, ask question, upvote)
+- Loading spinners for async operations, empty states for each tab
+- Lint passes clean with zero errors
+
+Stage Summary:
+- Full community hub page with Leaderboard, Forums, Messages, and Live AMAs
+- Integrated into sidebar navigation and SPA router as "Community" page
+- Uses shadcn/ui components, gold/orange theme, Framer Motion, responsive design
+- Comprehensive fallback data for all 4 tabs (10 leaderboard entries, 5 categories, 6 topics, 3 conversations, 4 AMA sessions)
+- Lint clean, zero errors
+
+---
+Task ID: community-api-routes
+Agent: community-api-builder
+Task: Build Community & Social Features API routes
+
+Work Log:
+- Created 13 API route files covering leaderboard, forums, chat, and Q&A
+- `/src/app/api/community/leaderboard/route.ts` - GET top 20 referrers by commission earnings with gold/silver/bronze badges, current user rank, optional monthly filter
+- `/src/app/api/forum/categories/route.ts` - GET public list of active categories with topic counts, POST admin create with auto-slug; seeds 5 default categories
+- `/src/app/api/forum/topics/route.ts` - GET paginated topics (pinned first, then lastReplyAt desc) with author/category, POST create topic with category validation
+- `/src/app/api/forum/topics/[id]/route.ts` - GET full topic with replies, PATCH update (author/admin), DELETE (author/admin)
+- `/src/app/api/forum/topics/[id]/replies/route.ts` - GET paginated replies (asc), POST create reply with locked check and replyCount increment
+- `/src/app/api/chat/conversations/route.ts` - GET user conversations with last message preview/unread count/other members, POST create DM (dedup) or group chat
+- `/src/app/api/chat/conversations/[id]/messages/route.ts` - GET paginated messages (before cursor) with auto-read marking, POST send message with lastMessageAt update
+- `/src/app/api/chat/conversations/[id]/read/route.ts` - POST mark all unread messages as read
+- `/src/app/api/qa/sessions/route.ts` - GET sessions with host info/question count/user question status, POST admin create session
+- `/src/app/api/qa/sessions/[id]/route.ts` - GET full session with questions (answered first, upvotes desc), PATCH admin update, DELETE admin delete
+- `/src/app/api/qa/sessions/[id]/questions/route.ts` - GET questions with upvote status, POST submit question (1 per user, upcoming/live only)
+- `/src/app/api/qa/sessions/[id]/questions/[questionId]/upvote/route.ts` - POST toggle upvote with JSON upvoterIds tracking
+- `/src/app/api/qa/sessions/[id]/questions/[questionId]/answer/route.ts` - POST answer question (admin or host only)
+
+Stage Summary:
+- All 13 API routes created and lint-passing with zero errors
+- Leaderboard with tiered reward badges (gold/silver/bronze for top 3)
+- Forum with category seeding, topic pinning/locking, paginated replies
+- Chat with DM deduplication, group chats, message read tracking
+- Q&A with one-question-per-user limit, upvote toggle, admin/host answer capability
+- All routes follow established patterns: Bearer token auth, async params, error instanceof Error, ISO date serialization
+
+---
+Task ID: community-social-features
+Agent: Main Agent
+Task: Implement Community & Social Features (Leaderboard, Forums, Chat, Live AMAs)
+
+Work Log:
+- Added 8 new Prisma models: ForumCategory, ForumTopic, ForumReply, Conversation, ConversationMember, ChatMessage, QASession, QAQuestion
+- Added 7 new User relations: forumTopics, forumReplies, chatMemberships, chatMessages, qaQuestions, hostedQASessions
+- Pushed schema to SQLite database successfully
+- Created 13 API route files via parallel agent:
+  - Leaderboard: GET top 20 referrers by earnings with gold/silver/bronze badges
+  - Forum: categories CRUD, topics CRUD with pagination/pinning/locking, replies CRUD
+  - Chat: conversations list/create, messages send/receive with read tracking
+  - Q&A: sessions CRUD, questions submit/upvote/answer, expert AMAs
+- Built CommunityPage.tsx (1811 lines) with 4 tabs:
+  - Tab 1: Leaderboard with top 3 podium, ranked table, "My Ranking" card
+  - Tab 2: Forums with category filters, create topic dialog, topic detail with replies
+  - Tab 3: Messages with split-layout chat, conversation list, message bubbles, polling
+  - Tab 4: Live AMAs with session cards, ask question dialog, view session with upvoted Q&A
+- Updated Sidebar.tsx: Added MessageCircle icon, 'community' page type, nav item
+- Updated page.tsx: Added CommunityPage import and routing case
+- Updated Header.tsx: Added 'community' page title
+- Auto-seeds 5 forum categories on first API call
+- Lint passes clean with zero errors
+
+Stage Summary:
+- Complete Community & Social Features system implemented
+- 8 Prisma models, 13 API routes, 1 comprehensive frontend page (1811 lines)
+- Features: referral leaderboard with rewards, discussion forums with categories, private messaging with conversations, live Q&A/AMA sessions with upvoting
+- All routes authenticated, admin routes protected
+- Dev server running with 200 status

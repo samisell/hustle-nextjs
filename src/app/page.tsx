@@ -21,6 +21,7 @@ import NotificationsPage from '@/components/dashboard/NotificationsPage';
 import SubscriptionPage from '@/components/dashboard/SubscriptionPage';
 import AdminPage from '@/components/dashboard/AdminPage';
 import EscrowPage from '@/components/dashboard/EscrowPage';
+import CommunityPage from '@/components/dashboard/CommunityPage';
 import ProfilePage from '@/components/dashboard/ProfilePage';
 import SettingsPage from '@/components/dashboard/SettingsPage';
 
@@ -149,6 +150,8 @@ export default function Home() {
         return <SubscriptionPage />;
       case 'escrow':
         return <EscrowPage />;
+      case 'community':
+        return <CommunityPage />;
       case 'profile':
         return <ProfilePage />;
       case 'settings':
