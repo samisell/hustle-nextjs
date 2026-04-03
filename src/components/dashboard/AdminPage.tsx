@@ -105,6 +105,12 @@ interface BroadcastItem {
   recipientCount: number; createdAt: string;
 }
 
+interface AdminSkillCategory {
+  id: string; name: string; slug: string; description: string | null;
+  icon: string; color: string; order: number; isActive: boolean;
+  _count: { courses: number };
+}
+
 /* ──────── Escrow Types (preserved from original) ──────── */
 
 type EscrowStatus = 'collecting' | 'funded' | 'active' | 'disputed' | 'released' | 'refunded' | 'expired' | 'cancelled';
@@ -343,6 +349,13 @@ export default function AdminPage() {
   const [resolveResolution, setResolveResolution] = useState('');
   const [resolving, setResolving] = useState(false);
 
+  /* ──────── Skill Category State ──────── */
+  const [skillCategories, setSkillCategories] = useState<AdminSkillCategory[]>([]);
+  const [catDialogOpen, setCatDialogOpen] = useState(false);
+  const [editingCat, setEditingCat] = useState<AdminSkillCategory | null>(null);
+  const [catForm, setCatForm] = useState({ name: '', slug: '', description: '', icon: 'BookOpen', color: '#D4AF37', order: '0' });
+  const [catSaving, setCatSaving] = useState(false);
+
   /* ═══════════════════════════════════════════════════════════════
      DATA FETCHING
      ═══════════════════════════════════════════════════════════════ */
@@ -370,6 +383,7 @@ export default function AdminPage() {
     fetchEscrows();
     fetchPayments();
     fetchBroadcasts();
+    fetchSkillCategories();
   }, [token]);
 
   const fetchStats = async () => {
@@ -413,6 +427,64 @@ export default function AdminPage() {
       if (res.ok) { const data = await res.json(); setBroadcasts(data.broadcasts || []); return; }
     } catch { /* fallback */ }
     setBroadcasts(FALLBACK_BROADCASTS);
+  };
+
+  const fetchSkillCategories = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch('/api/skill-categories', { headers: { Authorization: `Bearer ${token}` } });
+      if (res.ok) { const data = await res.json(); setSkillCategories(data.categories || []); return; }
+    } catch { /* fallback */ }
+    setSkillCategories([
+      { id: 'c1', name: 'Finance', slug: 'finance', description: 'Financial literacy', icon: 'DollarSign', color: '#10B981', order: 0, isActive: true, _count: { courses: 3 } },
+      { id: 'c2', name: 'Investing', slug: 'investing', description: 'Investment strategies', icon: 'TrendingUp', color: '#3B82F6', order: 1, isActive: true, _count: { courses: 2 } },
+      { id: 'c3', name: 'Crypto', slug: 'crypto', description: 'Cryptocurrency', icon: 'Bitcoin', color: '#F59E0B', order: 2, isActive: true, _count: { courses: 1 } },
+      { id: 'c4', name: 'Business', slug: 'business', description: 'Business strategy', icon: 'Briefcase', color: '#8B5CF6', order: 3, isActive: false, _count: { courses: 0 } },
+    ]);
+  };
+
+  const handleSaveCat = async () => {
+    if (!catForm.name.trim()) return;
+    setCatSaving(true);
+    try {
+      const url = editingCat ? `/api/skill-categories/${editingCat.id}` : '/api/skill-categories';
+      const method = editingCat ? 'PATCH' : 'POST';
+      const body = { ...catForm, order: parseInt(catForm.order) || 0 };
+      const res = await fetch(url, { method, headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      if (res.ok) { toast({ title: editingCat ? 'Category Updated' : 'Category Created', description: 'Success.' }); setCatDialogOpen(false); resetCatForm(); fetchSkillCategories(); }
+      else { const d = await res.json(); toast({ title: 'Error', description: d.error || 'Failed.' }); }
+    } catch { toast({ title: 'Error', description: 'Something went wrong.' }); }
+    finally { setCatSaving(false); }
+  };
+
+  const resetCatForm = () => { setCatForm({ name: '', slug: '', description: '', icon: 'BookOpen', color: '#D4AF37', order: '0' }); setEditingCat(null); };
+
+  const openCatDialog = (cat?: AdminSkillCategory) => {
+    if (cat) {
+      setEditingCat(cat);
+      setCatForm({ name: cat.name, slug: cat.slug, description: cat.description || '', icon: cat.icon, color: cat.color, order: String(cat.order) });
+    } else { resetCatForm(); }
+    setCatDialogOpen(true);
+  };
+
+  const handleDeleteCat = async (cat: AdminSkillCategory) => {
+    setActionLoading(`delete-cat-${cat.id}`);
+    try {
+      const res = await fetch(`/api/skill-categories/${cat.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+      if (res.ok) { toast({ title: 'Deleted', description: `${cat.name} has been deleted.` }); fetchSkillCategories(); }
+      else { const d = await res.json(); toast({ title: 'Error', description: d.error || 'Failed.' }); }
+    } catch { toast({ title: 'Error', description: 'Something went wrong.' }); }
+    finally { setActionLoading(null); }
+  };
+
+  const handleToggleCatActive = async (cat: AdminSkillCategory) => {
+    setActionLoading(`toggle-cat-${cat.id}`);
+    try {
+      const res = await fetch(`/api/skill-categories/${cat.id}`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ isActive: !cat.isActive }) });
+      if (res.ok) { setSkillCategories(prev => prev.map(c => c.id === cat.id ? { ...c, isActive: !cat.isActive } : c)); toast({ title: cat.isActive ? 'Deactivated' : 'Activated', description: `${cat.name} is now ${cat.isActive ? 'inactive' : 'active'}.` }); }
+      else { const d = await res.json(); toast({ title: 'Error', description: d.error || 'Failed.' }); }
+    } catch { toast({ title: 'Error', description: 'Something went wrong.' }); }
+    finally { setActionLoading(null); }
   };
 
   useEffect(() => { fetchPayments(); }, [paymentStatusFilter, paymentMethodFilter, paymentTypeFilter, paymentPage, token]);
@@ -896,41 +968,103 @@ export default function AdminPage() {
         {/* ═══════════════════ COURSES TAB ═══════════════════ */}
         <TabsContent value="courses">
           <motion.div {...TAB_ANIMATION} className="space-y-6">
-            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-              <div className="grid grid-cols-3 gap-4">
-                <StatCard title="Total Courses" value={courses.length} icon={BookOpen} />
-                <StatCard title="Total Enrollments" value={courses.reduce((s, c) => s + c.enrollmentsCount, 0)} icon={Users} />
-                <StatCard title="Avg Completion" value="67%" icon={Activity} />
+            {/* ──────── Courses Section ──────── */}
+            <div>
+              <h3 className="text-base font-semibold mb-3 flex items-center gap-2"><BookOpen className="h-4 w-4 text-gold" />Courses</h3>
+              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                <div className="grid grid-cols-3 gap-4">
+                  <StatCard title="Total Courses" value={courses.length} icon={BookOpen} />
+                  <StatCard title="Total Enrollments" value={courses.reduce((s, c) => s + c.enrollmentsCount, 0)} icon={Users} />
+                  <StatCard title="Avg Completion" value="67%" icon={Activity} />
+                </div>
+                <Button className="bg-gold text-white hover:bg-gold-dark" onClick={() => { resetCourseForm(); setCourseDialogOpen(true); }}><Plus className="mr-2 h-4 w-4" />Add Course</Button>
               </div>
-              <Button className="bg-gold text-white hover:bg-gold-dark" onClick={() => { resetCourseForm(); setCourseDialogOpen(true); }}><Plus className="mr-2 h-4 w-4" />Add Course</Button>
+              <Card className="mt-4">
+                <CardContent className="p-0">
+                  <ScrollArea className="max-h-96">
+                    <Table>
+                      <TableHeader><TableRow><TableHead>Title</TableHead><TableHead className="hidden sm:table-cell">Category</TableHead><TableHead>Difficulty</TableHead><TableHead className="hidden md:table-cell">Enrollments</TableHead><TableHead className="hidden lg:table-cell">Created</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+                      <TableBody>
+                        {courses.map((c) => (
+                          <TableRow key={c.id}>
+                            <TableCell><div><p className="font-medium">{c.title}</p><p className="text-xs text-muted-foreground line-clamp-1">{c.description}</p></div></TableCell>
+                            <TableCell className="hidden sm:table-cell"><Badge variant="secondary">{c.category}</Badge></TableCell>
+                            <TableCell><Badge variant="outline" className={c.difficulty === 'beginner' ? 'bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-400 border-green-200 dark:border-green-500/20' : c.difficulty === 'intermediate' ? 'bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/20' : 'bg-red-100 dark:bg-red-500/10 text-red-700 dark:text-red-400 border-red-200 dark:border-red-500/20'}>{c.difficulty}</Badge></TableCell>
+                            <TableCell className="hidden md:table-cell">{c.enrollmentsCount}</TableCell>
+                            <TableCell className="hidden lg:table-cell text-muted-foreground">{new Date(c.createdAt).toLocaleDateString()}</TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end gap-1">
+                                <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => fetchCourseDetail(c.id)}><Eye className="h-3.5 w-3.5" /></Button>
+                                <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => { setEditingCourse(c); setNewCourse({ title: c.title, description: c.description, difficulty: c.difficulty, category: c.category }); setCourseDialogOpen(true); }}><Edit className="h-3.5 w-3.5" /></Button>
+                                <Button variant="ghost" size="sm" className="h-7 px-2 text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300" onClick={() => { setDeleteTarget({ type: 'course', id: c.id, title: c.title }); setDeleteDialogOpen(true); }}><Trash2 className="h-3.5 w-3.5" /></Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
             </div>
-            <Card>
-              <CardContent className="p-0">
-                <ScrollArea className="max-h-96">
-                  <Table>
-                    <TableHeader><TableRow><TableHead>Title</TableHead><TableHead className="hidden sm:table-cell">Category</TableHead><TableHead>Difficulty</TableHead><TableHead className="hidden md:table-cell">Enrollments</TableHead><TableHead className="hidden lg:table-cell">Created</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
-                    <TableBody>
-                      {courses.map((c) => (
-                        <TableRow key={c.id}>
-                          <TableCell><div><p className="font-medium">{c.title}</p><p className="text-xs text-muted-foreground line-clamp-1">{c.description}</p></div></TableCell>
-                          <TableCell className="hidden sm:table-cell"><Badge variant="secondary">{c.category}</Badge></TableCell>
-                          <TableCell><Badge variant="outline" className={c.difficulty === 'beginner' ? 'bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-400 border-green-200 dark:border-green-500/20' : c.difficulty === 'intermediate' ? 'bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/20' : 'bg-red-100 dark:bg-red-500/10 text-red-700 dark:text-red-400 border-red-200 dark:border-red-500/20'}>{c.difficulty}</Badge></TableCell>
-                          <TableCell className="hidden md:table-cell">{c.enrollmentsCount}</TableCell>
-                          <TableCell className="hidden lg:table-cell text-muted-foreground">{new Date(c.createdAt).toLocaleDateString()}</TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex justify-end gap-1">
-                              <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => fetchCourseDetail(c.id)}><Eye className="h-3.5 w-3.5" /></Button>
-                              <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => { setEditingCourse(c); setNewCourse({ title: c.title, description: c.description, difficulty: c.difficulty, category: c.category }); setCourseDialogOpen(true); }}><Edit className="h-3.5 w-3.5" /></Button>
-                              <Button variant="ghost" size="sm" className="h-7 px-2 text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300" onClick={() => { setDeleteTarget({ type: 'course', id: c.id, title: c.title }); setDeleteDialogOpen(true); }}><Trash2 className="h-3.5 w-3.5" /></Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </ScrollArea>
-              </CardContent>
-            </Card>
+
+            <Separator />
+
+            {/* ──────── Skill Categories Section ──────── */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-base font-semibold flex items-center gap-2"><Filter className="h-4 w-4 text-gold" />Skill Categories</h3>
+                <Button size="sm" className="bg-gold text-white hover:bg-gold-dark" onClick={() => openCatDialog()}><Plus className="mr-1.5 h-3.5 w-3.5" />Add Category</Button>
+              </div>
+              <Card>
+                <CardContent className="p-0">
+                  <ScrollArea className="max-h-72">
+                    <Table>
+                      <TableHeader><TableRow><TableHead>Icon</TableHead><TableHead>Name</TableHead><TableHead className="hidden sm:table-cell">Slug</TableHead><TableHead className="hidden md:table-cell">Color</TableHead><TableHead>Courses</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+                      <TableBody>
+                        {skillCategories.map((cat) => (
+                          <TableRow key={cat.id} className={!cat.isActive ? 'opacity-50' : ''}>
+                            <TableCell>
+                              <div className="flex h-7 w-7 items-center justify-center rounded-md text-[10px] font-bold text-white" style={{ backgroundColor: cat.color }}>
+                                {cat.icon.slice(0, 2).toUpperCase()}
+                              </div>
+                            </TableCell>
+                            <TableCell><div><p className="font-medium text-sm">{cat.name}</p><p className="text-xs text-muted-foreground line-clamp-1 hidden lg:block">{cat.description || '—'}</p></div></TableCell>
+                            <TableCell className="hidden sm:table-cell text-xs text-muted-foreground font-mono">{cat.slug}</TableCell>
+                            <TableCell className="hidden md:table-cell">
+                              <div className="flex items-center gap-1.5">
+                                <div className="h-4 w-4 rounded-sm border border-border" style={{ backgroundColor: cat.color }} />
+                                <span className="text-xs text-muted-foreground">{cat.color}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell><Badge variant="secondary" className="text-xs">{cat._count.courses}</Badge></TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className={cat.isActive ? 'bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-400 border-green-200 dark:border-green-500/20' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700'}>
+                                {cat.isActive ? 'Active' : 'Inactive'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end gap-1">
+                                <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => handleToggleCatActive(cat)} disabled={actionLoading === `toggle-cat-${cat.id}`}>
+                                  {actionLoading === `toggle-cat-${cat.id}` ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                                </Button>
+                                <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => openCatDialog(cat)}><Edit className="h-3.5 w-3.5" /></Button>
+                                <Button variant="ghost" size="sm" className="h-7 px-2 text-red-500 dark:text-red-400 hover:text-red-600" onClick={() => handleDeleteCat(cat)} disabled={actionLoading === `delete-cat-${cat.id}`}>
+                                  {actionLoading === `delete-cat-${cat.id}` ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        {skillCategories.length === 0 && (
+                          <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground text-sm">No categories created yet.</TableCell></TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+            </div>
           </motion.div>
         </TabsContent>
 
@@ -1300,6 +1434,55 @@ export default function AdminPage() {
               </div>
             </ScrollArea>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* ──────── Skill Category Dialog ──────── */}
+      <Dialog open={catDialogOpen} onOpenChange={setCatDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{editingCat ? 'Edit Category' : 'Create Category'}</DialogTitle>
+            <DialogDescription>{editingCat ? 'Update the skill category details.' : 'Add a new skill category for organizing courses.'}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label>Name <span className="text-destructive">*</span></Label>
+              <Input placeholder="e.g. Finance" value={catForm.name} onChange={(e) => setCatForm({ ...catForm, name: e.target.value, slug: e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Slug</Label>
+              <Input placeholder="auto-generated-from-name" value={catForm.slug} onChange={(e) => setCatForm({ ...catForm, slug: e.target.value })} className="font-mono text-xs" />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Description</Label>
+              <Textarea placeholder="Brief description of the category..." value={catForm.description} onChange={(e) => setCatForm({ ...catForm, description: e.target.value })} rows={2} />
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-1.5">
+                <Label>Icon</Label>
+                <Input placeholder="BookOpen" value={catForm.icon} onChange={(e) => setCatForm({ ...catForm, icon: e.target.value })} />
+                <p className="text-[10px] text-muted-foreground">Lucide icon name</p>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Color</Label>
+                <Input placeholder="#D4AF37" value={catForm.color} onChange={(e) => setCatForm({ ...catForm, color: e.target.value })} />
+                <div className="flex items-center gap-1.5 mt-1">
+                  <div className="h-3 w-3 rounded-sm border border-border" style={{ backgroundColor: catForm.color }} />
+                  <span className="text-[10px] text-muted-foreground">Preview</span>
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Order</Label>
+                <Input type="number" placeholder="0" value={catForm.order} onChange={(e) => setCatForm({ ...catForm, order: e.target.value })} />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCatDialogOpen(false)}>Cancel</Button>
+            <Button className="bg-gold text-white hover:bg-gold-dark" onClick={handleSaveCat} disabled={catSaving || !catForm.name.trim()}>
+              {catSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : editingCat ? 'Update Category' : 'Create Category'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

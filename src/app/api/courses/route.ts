@@ -9,21 +9,62 @@ function authenticate(req: NextRequest) {
   return verifyToken(token);
 }
 
-// GET /api/courses - List all courses with enrollment count
+// GET /api/courses - List all courses with enrollment count, optional category filter
 export async function GET(req: NextRequest) {
   try {
+    const { searchParams } = new URL(req.url);
+    const categoryId = searchParams.get('categoryId');
+
     const courses = await db.course.findMany({
+      where: categoryId ? { skillCategoryId: categoryId } : undefined,
       include: {
         _count: {
           select: { enrollments: true, lessons: true },
+        },
+        skillCategory: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            icon: true,
+            color: true,
+          },
         },
       },
       orderBy: { createdAt: 'desc' },
     });
 
+    // If authenticated, include user enrollment and certification info per course
+    const payload = authenticate(req);
+    if (payload) {
+      const enrollments = await db.enrollment.findMany({
+        where: { userId: payload.userId, courseId: { in: courses.map(c => c.id) } },
+        select: { courseId: true, progress: true },
+      });
+
+      const certifications = await db.courseCertification.findMany({
+        where: { userId: payload.userId, courseId: { in: courses.map(c => c.id) } },
+        select: { courseId: true },
+      });
+
+      const enrollmentMap = new Map(enrollments.map(e => [e.courseId, e.progress]));
+      const certificationSet = new Set(certifications.map(c => c.courseId));
+
+      const enrichedCourses = courses.map(course => ({
+        ...course,
+        userProgress: enrollmentMap.has(course.id) ? { enrolled: true, progress: enrollmentMap.get(course.id)! } : null,
+        hasCertification: certificationSet.has(course.id),
+      }));
+
+      return NextResponse.json({ courses: enrichedCourses });
+    }
+
     return NextResponse.json({ courses });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+  } catch (error) {
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -45,25 +86,28 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ error: 'Invalid action. Use "enroll" or "progress".' }, { status: 400 });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+  } catch (error) {
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
-async function handleEnroll(userId: string, body: Record<string, any>) {
+async function handleEnroll(userId: string, body: Record<string, unknown>) {
   const { courseId } = body;
 
   if (!courseId) {
     return NextResponse.json({ error: 'Course ID is required.' }, { status: 400 });
   }
 
-  const course = await db.course.findUnique({ where: { id: courseId } });
+  const course = await db.course.findUnique({ where: { id: courseId as string } });
   if (!course) {
     return NextResponse.json({ error: 'Course not found.' }, { status: 404 });
   }
 
   const existing = await db.enrollment.findUnique({
-    where: { userId_courseId: { userId, courseId } },
+    where: { userId_courseId: { userId, courseId: courseId as string } },
   });
 
   if (existing) {
@@ -73,7 +117,7 @@ async function handleEnroll(userId: string, body: Record<string, any>) {
   const enrollment = await db.enrollment.create({
     data: {
       userId,
-      courseId,
+      courseId: courseId as string,
       progress: 0,
     },
   });
@@ -90,7 +134,7 @@ async function handleEnroll(userId: string, body: Record<string, any>) {
   return NextResponse.json({ enrollment }, { status: 201 });
 }
 
-async function handleProgress(userId: string, body: Record<string, any>) {
+async function handleProgress(userId: string, body: Record<string, unknown>) {
   const { lessonId, courseId } = body;
 
   if (!lessonId || !courseId) {
@@ -99,7 +143,7 @@ async function handleProgress(userId: string, body: Record<string, any>) {
 
   // Check enrollment exists
   const enrollment = await db.enrollment.findUnique({
-    where: { userId_courseId: { userId, courseId } },
+    where: { userId_courseId: { userId, courseId: courseId as string } },
   });
   if (!enrollment) {
     return NextResponse.json({ error: 'You are not enrolled in this course.' }, { status: 400 });
@@ -107,7 +151,7 @@ async function handleProgress(userId: string, body: Record<string, any>) {
 
   // Check lesson belongs to course
   const lesson = await db.lesson.findFirst({
-    where: { id: lessonId, courseId },
+    where: { id: lessonId as string, courseId: courseId as string },
   });
   if (!lesson) {
     return NextResponse.json({ error: 'Lesson not found in this course.' }, { status: 404 });
@@ -115,10 +159,10 @@ async function handleProgress(userId: string, body: Record<string, any>) {
 
   // Upsert lesson progress
   const progress = await db.lessonProgress.upsert({
-    where: { userId_lessonId: { userId, lessonId } },
+    where: { userId_lessonId: { userId, lessonId: lessonId as string } },
     create: {
       userId,
-      lessonId,
+      lessonId: lessonId as string,
       completed: true,
     },
     update: {
@@ -127,15 +171,19 @@ async function handleProgress(userId: string, body: Record<string, any>) {
   });
 
   // Recalculate enrollment progress
-  const totalLessons = await db.lesson.count({ where: { courseId } });
+  const totalLessons = await db.lesson.count({ where: { courseId: courseId as string } });
   const completedLessons = await db.lessonProgress.count({
-    where: { userId, lessonId: { in: (await db.lesson.findMany({ where: { courseId }, select: { id: true } })).map(l => l.id) }, completed: true },
+    where: {
+      userId,
+      lessonId: { in: (await db.lesson.findMany({ where: { courseId: courseId as string }, select: { id: true } })).map(l => l.id) },
+      completed: true,
+    },
   });
 
   const progressPercent = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
 
   const updatedEnrollment = await db.enrollment.update({
-    where: { userId_courseId: { userId, courseId } },
+    where: { userId_courseId: { userId, courseId: courseId as string } },
     data: { progress: progressPercent },
   });
 

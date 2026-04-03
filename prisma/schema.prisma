@@ -40,6 +40,7 @@ model User {
   commissionsEarned     Commission[]           @relation("UserCommissions")
   commissionsGenerated  Commission[]           @relation("UserCommissionSource")
   payouts               Payout[]               @relation("UserPayouts")
+  certifications        CourseCertification[]
 }
 
 model Subscription {
@@ -75,39 +76,45 @@ model Payment {
 }
 
 model Course {
-  id          String   @id @default(cuid())
-  title       String
-  description String?
-  category    String?
-  thumbnail   String?
-  difficulty  String   @default("beginner") // "beginner" | "intermediate" | "advanced"
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(cuid())
+  title         String
+  description   String?
+  category      String?
+  thumbnail     String?
+   difficulty    String   @default("beginner") // "beginner" | "intermediate" | "advanced"
+  skillCategoryId String? // link to SkillCategory
+  estimatedHours Int     @default(0) // estimated hours to complete
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  lessons     Lesson[]
-  enrollments Enrollment[]
+  lessons        Lesson[]
+  enrollments    Enrollment[]
+  certifications CourseCertification[]
+  skillCategory  SkillCategory?             @relation("CourseSkillCategory", fields: [skillCategoryId], references: [id])
 }
 
 model Lesson {
-  id        String   @id @default(cuid())
-  courseId  String
-  title     String
-  content   String   // text content
-  order     Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String   @id @default(cuid())
+  courseId      String
+  title         String
+  content       String   // text content
+  order         Int      @default(0)
+  estimatedMinutes Int    @default(0) // estimated reading time in minutes
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   course     Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
   progresses LessonProgress[]
 }
 
 model Enrollment {
-  id        String   @id @default(cuid())
-  userId    String
-  courseId  String
-  progress  Float    @default(0) // percentage 0-100
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String   @id @default(cuid())
+  userId         String
+  courseId       String
+  progress       Float    @default(0) // percentage 0-100
+  completedAt    DateTime? // when user reached 100%
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
@@ -384,4 +391,37 @@ model Payout {
   updatedAt       DateTime @updatedAt
 
   user User @relation("UserPayouts", fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ====================
+// LEARNING HUB - SKILL CATEGORIES & CERTIFICATIONS
+// ====================
+
+model SkillCategory {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  icon        String   @default("BookOpen") // lucide icon name
+  color       String   @default("#D4AF37") // hex color for display
+  order       Int      @default(0) // display order
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  courses Course[] @relation("CourseSkillCategory")
+}
+
+model CourseCertification {
+  id             String   @id @default(cuid())
+  userId         String
+  courseId       String
+  badgeName      String   // display name e.g. "Crypto Trading Master"
+  badgeIcon      String   @default("Award") // lucide icon name
+  earnedAt       DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
 }

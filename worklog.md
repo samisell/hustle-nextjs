@@ -619,3 +619,151 @@ Stage Summary:
 - Real-time earnings dashboard with monthly chart and growth tracking
 - 6 new API routes for MLM operations + admin payout management
 - Full frontend dashboard with network visualization, commission history, charts, and payout requests
+
+---
+## Task ID: 14 - learning-hub-api-routes
+### Work Task
+Build Learning Hub API routes for skill categories, course certifications, and enhanced course endpoints.
+
+### Work Summary
+Created 3 new API route files and updated 3 existing files. All routes lint clean with zero errors.
+
+#### Files Created
+
+1. **`/src/app/api/skill-categories/route.ts`** - Skill category listing and creation
+   - `GET /api/skill-categories` - Public endpoint. Returns all active skill categories ordered by `order` field. Includes `_count.courses` per category. No auth required.
+   - `POST /api/skill-categories` - Admin only. Creates new skill category with name (required), slug (auto-generated from name if not provided), description, icon, color, order. Validates name and slug uniqueness via Prisma.
+
+2. **`/src/app/api/skill-categories/[id]/route.ts`** - Skill category update and deletion
+   - `PATCH /api/skill-categories/[id]` - Admin only. Updates any combination of name, description, icon, color, order, isActive. Returns 404 if not found.
+   - `DELETE /api/skill-categories/[id]` - Admin only. Deletes category only if no courses are linked (`_count.courses === 0`). Returns 400 with error message if courses exist.
+
+3. **`/src/app/api/certifications/route.ts`** - User certifications listing
+   - `GET /api/certifications` - Auth required. Returns all certifications for the authenticated user, ordered by `earnedAt` desc. Includes course title and skill category info (name, slug, icon, color).
+
+#### Files Updated
+
+4. **`/src/app/api/courses/route.ts`** - Enhanced course listing
+   - `GET /api/courses` - Now includes `skillCategory` relation (name, slug, icon, color) per course. Accepts optional `?categoryId=xxx` query parameter to filter courses by skill category.
+   - `POST /api/courses` - Unchanged (enroll + progress actions).
+   - Updated error handling to use `error instanceof Error` pattern.
+
+5. **`/src/app/api/courses/progress/route.ts`** - Enhanced progress with certification awarding
+   - Sets `completedAt = new Date()` on enrollment when `progressPercent === 100` and `completedAt` is null.
+   - After 100% completion, checks for existing `CourseCertification`. If none exists, creates one with `badgeName = "${course.title} Certified"` and `badgeIcon = "Award"`.
+   - Returns `certification` object in response when course is completed.
+   - Updated error handling to use `error instanceof Error` pattern.
+
+6. **`/src/app/api/courses/[id]/route.ts`** - Enhanced course detail
+   - Now includes `skillCategory` relation (id, name, slug, icon, color) in course response.
+   - For authenticated users, checks and returns their `CourseCertification` for this course (null if not yet certified).
+   - Updated error handling to use `error instanceof Error` pattern.
+
+#### Design Decisions
+- Skill categories are public read (no auth for GET), admin-only for create/update/delete
+- Slug auto-generation from name using lowercase, space-to-hyphen, and non-alphanumeric stripping
+- Category deletion safety check prevents orphaned course references
+- Certifications are auto-awarded on first course completion via the progress endpoint
+- The `completedAt` timestamp on Enrollment is set exactly once when progress first hits 100%
+- All new routes follow established project patterns: `NextRequest/NextResponse`, Bearer token auth, `error instanceof Error` catch blocks, Next.js 16 async params (`params: Promise<{ id: string }>`)
+
+Stage Summary:
+- 3 new API route files + 3 updated files for Learning Hub system
+- Skill categories CRUD (public read, admin write)
+- Auto-certification on course completion
+- Course filtering by category
+- Lint passes clean with zero errors
+
+---
+## Task ID: 15 - learning-hub-builder
+### Work Task
+Complete rewrite of CoursesPage as a comprehensive Learning Hub with skill category filtering, course detail with expandable lessons, certifications tab, and all supporting API routes. Also update AdminPage with Skill Category management (CRUD) in the existing Courses tab.
+
+### Work Summary
+
+#### API Routes Created (3 new files, 1 updated)
+
+1. **`/src/app/api/skill-categories/route.ts`** - Skill categories CRUD
+   - `GET /api/skill-categories` - Lists categories (active only for public, all for admin). Includes `_count.courses`.
+   - `POST /api/skill-categories` - Creates category (admin only). Auto-generates slug from name if not provided. Validates unique name/slug.
+
+2. **`/src/app/api/skill-categories/[id]/route.ts`** - Single category operations
+   - `GET` - Returns single category with course count
+   - `PATCH` - Updates category fields (admin only)
+   - `DELETE` - Deletes category only if no courses linked (admin only, safety check)
+
+3. **`/src/app/api/certifications/route.ts`** - User certifications
+   - `GET /api/certifications` - Returns user's earned certifications with course info and skill category (auth required)
+
+4. **Updated `/src/app/api/courses/route.ts`** - Enhanced course listing
+   - `GET /api/courses` now includes `skillCategory` relation and per-user `userProgress` (enrolled + progress) and `hasCertification` for authenticated users
+   - Supports `?categoryId=` query filter
+
+#### Frontend Components
+
+1. **`/src/components/dashboard/CoursesPage.tsx`** - Complete rewrite (~600 lines)
+   - **Header Section**: "Learning Hub" title with description, 3 StatCards (Total Courses, Enrolled, Completed)
+   - **Skill Category Filter Bar**: Horizontal scrollable pills fetched from `/api/skill-categories`, "All" default, selected state with category color, shows course count per category
+   - **Courses Tab**: Responsive grid (1/2/3 cols), cards with category color bar, skill category badge, difficulty badge (beginner=green, intermediate=amber, advanced=red), estimated hours, lesson count, progress bar if enrolled, "Certified" badge if completed, Framer Motion staggered animations
+   - **Certifications Tab**: Earned certifications grid with Award icon, badge name, course title, category color, earned date. Empty state with "Browse Courses" action.
+   - **Course Detail View**: Back button, certification banner on completion, course header with category/difficulty badges, progress section, enroll button for non-enrolled, expandable/collapsible lesson list with:
+     - Lesson number/status indicator (gold checkmark for completed)
+     - Estimated reading time
+     - Click to expand shows formatted content (handles ## headings, ** bold, bullet points, > blockquotes)
+     - "Mark Complete" button (both inline and in expanded view)
+     - Auto-awards certification when all lessons completed
+   - Uses `sonner` toast for all notifications
+   - Comprehensive fallback data for graceful degradation
+   - Loading states with Loader2 spinner
+
+2. **`/src/components/dashboard/AdminPage.tsx`** - Updated with Skill Category management
+   - Added `AdminSkillCategory` interface and state management
+   - Added `fetchSkillCategories()` in data fetching pipeline
+   - Courses tab now has two sections separated by a divider:
+     - **Courses Section** (existing): stat cards + course table with CRUD
+     - **Skill Categories Section** (new): "Add Category" button, table with icon (colored circle with 2-letter abbreviation), name, slug, color swatch + hex value, course count, active/inactive badge, actions (toggle active, edit, delete)
+   - **Create/Edit Category Dialog**: Form with name (auto-fills slug), slug, description textarea, icon (lucide icon name input), color (hex with live preview swatch), order (number)
+   - Admin CRUD: `POST /api/skill-categories`, `PATCH /api/skill-categories/[id]`, `DELETE /api/skill-categories/[id]`
+   - Toggle active/inactive per category
+   - Delete protection: API prevents deleting categories with courses
+
+#### Design Implementation
+- Gold (#D4AF37) and orange (#FF8C00) theme colors throughout
+- Dark/light mode compatible with proper dark: variants
+- Framer Motion animations: staggered card entries, page transitions, expand/collapse for lessons
+- shadcn/ui components: Card, Button, Badge, Progress, ScrollArea, Separator, Input, Label, Textarea, Dialog
+- Responsive grids: sm:grid-cols-2, lg:grid-cols-3
+- Custom scrollbar styling on ScrollArea sections
+- `useAuthStore` for token-based API authentication
+- `sonner` toast notifications for user feedback
+
+Stage Summary:
+- 3 new API route files + 1 updated API route file
+- Complete CoursesPage rewrite with Learning Hub, category filtering, expandable lessons, and certifications
+- AdminPage enhanced with full Skill Category CRUD management
+- Lint passes clean with zero errors
+- Dev server running successfully with 200 status
+
+---
+## Task ID: 16 - learning-hub
+Agent: Main Agent
+Task: Implement Learning Hub with dynamic skill categories, text-based courses, and certification badges
+
+Work Log:
+- Updated Prisma schema: added SkillCategory model (name, slug, description, icon, color, order, isActive), CourseCertification model (userId, courseId, badgeName, badgeIcon, earnedAt), new fields on Course (skillCategoryId, estimatedHours), Enrollment (completedAt), Lesson (estimatedMinutes)
+- Pushed schema to SQLite database successfully
+- Created `src/lib/seed-learning-hub.ts` — Seed script with 8 skill categories and 6 courses with 24 full text lessons
+- Seeded database: 8 categories (Affiliate Marketing, Crypto Trading, Freelancing, Real Estate Flipping, Dropshipping & E-commerce, Financial Literacy, Investment Fundamentals, Digital Marketing) and 6 courses with rich markdown content
+- Created 3 new API routes: skill-categories (GET public + POST admin), skill-categories/[id] (PATCH + DELETE admin), certifications (GET auth)
+- Updated 3 existing API routes: courses (added skillCategory relation + categoryId filter), courses/[id] (added skillCategory + certification check), courses/progress (added completedAt timestamp + auto-creates CourseCertification badge on 100% completion)
+- Complete rewrite of CoursesPage.tsx (1059 lines) as Learning Hub with skill category filter bar, course grid with color-coded categories, expandable lesson reader with formatted text, certifications section, and stat cards
+- Updated AdminPage with skill category management (CRUD) in the Courses tab
+
+Stage Summary:
+- Learning Hub with 8 dynamic skill categories and 6 text-based courses with 24 lessons
+- All lessons contain actionable, high-quality text content (10-15 min reading time each)
+- Skill categories are fully dynamic — admin can add/edit/delete from admin dashboard
+- Certification badges automatically awarded on course completion
+- Courses filterable by skill category
+- Lessons expand/collapse with formatted content (headings, bold, bullets, blockquotes)
+- Lint passes clean, dev server returns 200

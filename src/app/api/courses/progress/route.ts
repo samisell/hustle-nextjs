@@ -49,9 +49,17 @@ export async function POST(req: NextRequest) {
 
     const progressPercent = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
 
-    await db.enrollment.update({
+    // Build enrollment update data
+    const updateData: Record<string, unknown> = { progress: progressPercent };
+
+    // Set completedAt when reaching 100% for the first time
+    if (progressPercent === 100 && !enrollment.completedAt) {
+      updateData.completedAt = new Date();
+    }
+
+    const updatedEnrollment = await db.enrollment.update({
       where: { userId_courseId: { userId: payload.userId, courseId } },
-      data: { progress: progressPercent },
+      data: updateData,
     });
 
     if (progressPercent === 100) {
@@ -89,10 +97,41 @@ export async function POST(req: NextRequest) {
           },
         });
       }
+
+      // Award certification badge if not already earned
+      const existingCert = await db.courseCertification.findUnique({
+        where: { userId_courseId: { userId: payload.userId, courseId } },
+      });
+
+      let certification = existingCert || null;
+
+      if (!existingCert) {
+        const course = await db.course.findUnique({ where: { id: courseId } });
+        const badgeName = course ? `${course.title} Certified` : 'Course Certified';
+
+        certification = await db.courseCertification.create({
+          data: {
+            userId: payload.userId,
+            courseId,
+            badgeName,
+            badgeIcon: 'Award',
+          },
+        });
+      }
+
+      return NextResponse.json({
+        success: true,
+        progress: progressPercent,
+        enrollment: updatedEnrollment,
+        certification,
+      });
     }
 
-    return NextResponse.json({ success: true, progress: progressPercent });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ success: true, progress: progressPercent, enrollment: updatedEnrollment });
+  } catch (error) {
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
