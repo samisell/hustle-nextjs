@@ -152,3 +152,28 @@ Stage Summary:
 - Frontend verification at `/api/payments/verify?tx_ref=xxx` as backup
 - All API keys stored securely in `.env` file
 - Payment records track full lifecycle: pending → completed/failed with Flutterwave transaction IDs
+
+---
+Task ID: 5
+Agent: Main Agent
+Task: Implement Cryptomus crypto payment gateway alongside Flutterwave
+
+Work Log:
+- Updated `.env` with Cryptomus API keys (API_KEY, MERCHANT_UUID, PAYMENT_UUID, WEBHOOK_SECRET)
+- Created `src/lib/cryptomus.ts` - Full Cryptomus utility library with MD5 payload signing, invoice creation, invoice info retrieval, payout creation, webhook signature verification, and `isConfigured()` helper
+- Created `src/app/api/payments/crypto/initialize/route.ts` - POST endpoint to create Cryptomus invoices with checkout URL, crypto address, QR code, network details; stores invoice UUID in payment metadata for later verification
+- Created `src/app/api/payments/crypto/verify/route.ts` - GET endpoint to poll Cryptomus invoice status by tx_ref; handles paid/paid_over/expired/cancel states
+- Created `src/app/api/payments/crypto/webhook/route.ts` - POST webhook handler for Cryptomus callbacks (check/confirm/paid/paid_over/fail/cancel/refund) with MD5 signature verification and double-verification via API; status mapping from Cryptomus states to our payment states
+- Updated `src/app/api/payments/verify/route.ts` - Universal verification endpoint now handles both Flutterwave and Cryptomus based on `method` query param or `paymentMethod` field in DB
+- Updated `src/components/dashboard/SubscriptionPage.tsx` - Multi-step payment dialog: Step 1 = choose method (Card/Bank or Crypto), Step 2 = crypto details (address, QR code, amount, expiry), with auto-polling every 15s and manual verification on return; payment history shows Flutterwave (green) and Crypto (orange) badges
+- Updated `src/components/dashboard/WalletPage.tsx` - Multi-step fund dialog with same payment method selector, amount entry, and crypto payment details view; includes auto-polling, copy address button, QR code display, and countdown timer
+- Fixed lint errors: added missing `Label` import to SubscriptionPage and `Check` import to WalletPage
+- Lint passes clean, dev server returns 200
+
+Stage Summary:
+- Two payment gateways now available: **Flutterwave** (card/bank) and **Cryptomus** (crypto)
+- User selects payment method in dialog → Flutterwave redirects to hosted checkout / Cryptomus shows in-app crypto payment details with QR code
+- Crypto payments auto-poll every 15 seconds for blockchain confirmation
+- Webhook endpoints: `/api/payments/webhook` (Flutterwave) and `/api/payments/crypto/webhook` (Cryptomus)
+- Universal verification at `/api/payments/verify?tx_ref=xxx&method=flutterwave|crypto`
+- All API keys stored securely in `.env`
