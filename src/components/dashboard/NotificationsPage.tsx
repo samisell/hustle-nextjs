@@ -31,10 +31,10 @@ interface Notification {
 }
 
 const typeConfig = {
-  info: { icon: Info, color: 'bg-blue-100 text-blue-600', badge: 'bg-blue-100 text-blue-700 border-blue-200' },
-  success: { icon: CheckCircle2, color: 'bg-green-100 text-green-600', badge: 'bg-green-100 text-green-700 border-green-200' },
-  warning: { icon: AlertTriangle, color: 'bg-amber-100 text-amber-600', badge: 'bg-amber-100 text-amber-700 border-amber-200' },
-  error: { icon: XCircle, color: 'bg-red-100 text-red-600', badge: 'bg-red-100 text-red-700 border-red-200' },
+  info: { icon: Info, color: 'bg-blue-100 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400', badge: 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20' },
+  success: { icon: CheckCircle2, color: 'bg-green-100 text-green-600 dark:bg-green-500/10 dark:text-green-400', badge: 'bg-green-100 text-green-700 border-green-200 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/20' },
+  warning: { icon: AlertTriangle, color: 'bg-amber-100 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400', badge: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20' },
+  error: { icon: XCircle, color: 'bg-red-100 text-red-600 dark:bg-red-500/10 dark:text-red-400', badge: 'bg-red-100 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20' },
 };
 
 export default function NotificationsPage() {

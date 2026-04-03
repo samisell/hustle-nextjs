@@ -16,6 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import ThemeToggle from '@/components/shared/ThemeToggle';
 
 interface LandingPageProps {
   onLogin: () => void;
@@ -39,13 +40,13 @@ const features = [
     icon: TrendingUp,
     title: 'Invest',
     description: 'Grow your wealth with curated investment opportunities and smart strategies.',
-    color: 'bg-green-500/10 text-green-600',
+    color: 'bg-green-500/10 text-green-600 dark:text-green-400',
   },
   {
     icon: Rocket,
     title: 'Grow',
     description: 'Scale your financial knowledge and achieve long-term financial freedom.',
-    color: 'bg-purple-500/10 text-purple-600',
+    color: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
   },
 ];
 
@@ -132,6 +133,7 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
             </span>
           </div>
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             <Button variant="ghost" onClick={onLogin}>
               Log in
             </Button>

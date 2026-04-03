@@ -130,29 +130,29 @@ interface AdminEscrow {
    ═══════════════════════════════════════════════════════════════ */
 
 const ESCROW_STATUS_BADGE: Record<EscrowStatus, string> = {
-  collecting: 'bg-amber-100 text-amber-700 border-amber-200',
-  funded: 'bg-green-100 text-green-700 border-green-200',
-  active: 'bg-blue-100 text-blue-700 border-blue-200',
-  disputed: 'bg-red-100 text-red-700 border-red-200',
-  released: 'bg-green-100 text-green-700 border-green-200',
-  refunded: 'bg-gray-100 text-gray-600 border-gray-200',
-  expired: 'bg-gray-100 text-gray-600 border-gray-200',
-  cancelled: 'bg-gray-100 text-gray-600 border-gray-200',
+  collecting: 'bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/20',
+  funded: 'bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-400 border-green-200 dark:border-green-500/20',
+  active: 'bg-blue-100 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/20',
+  disputed: 'bg-red-100 dark:bg-red-500/10 text-red-700 dark:text-red-400 border-red-200 dark:border-red-500/20',
+  released: 'bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-400 border-green-200 dark:border-green-500/20',
+  refunded: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700',
+  expired: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700',
+  cancelled: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700',
 };
 const ESCROW_TYPE_LABEL: Record<EscrowType, string> = {
   deal_funding: 'Deal Funding', investment_deal: 'Investment Deal',
   service_payment: 'Service Payment', milestone: 'Milestone',
 };
 const MILESTONE_STATUS_BADGE: Record<string, string> = {
-  pending: 'bg-gray-100 text-gray-600 border-gray-200',
-  released: 'bg-green-100 text-green-700 border-green-200',
-  held: 'bg-amber-100 text-amber-700 border-amber-200',
+  pending: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700',
+  released: 'bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-400 border-green-200 dark:border-green-500/20',
+  held: 'bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/20',
 };
 const DISPUTE_ADMIN_STATUS_BADGE: Record<string, string> = {
-  open: 'bg-amber-100 text-amber-700 border-amber-200',
-  reviewing: 'bg-blue-100 text-blue-700 border-blue-200',
-  resolved: 'bg-green-100 text-green-700 border-green-200',
-  dismissed: 'bg-gray-100 text-gray-600 border-gray-200',
+  open: 'bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/20',
+  reviewing: 'bg-blue-100 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/20',
+  resolved: 'bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-400 border-green-200 dark:border-green-500/20',
+  dismissed: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700',
 };
 
 /* ═══════════════════════════════════════════════════════════════
@@ -864,17 +864,17 @@ export default function AdminPage() {
                             <TableCell className="font-medium">${w.amount.toFixed(2)}</TableCell>
                             <TableCell className="hidden sm:table-cell text-muted-foreground text-xs font-mono">{w.walletAddress}</TableCell>
                             <TableCell>
-                              <Badge className={w.status === 'pending' ? 'bg-amber-100 text-amber-700 border-amber-200' : w.status === 'approved' || w.status === 'completed' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200'} variant="outline">{w.status}</Badge>
+                              <Badge className={w.status === 'pending' ? 'bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/20' : w.status === 'approved' || w.status === 'completed' ? 'bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-400 border-green-200 dark:border-green-500/20' : 'bg-red-100 dark:bg-red-500/10 text-red-700 dark:text-red-400 border-red-200 dark:border-red-500/20'} variant="outline">{w.status}</Badge>
                             </TableCell>
                             <TableCell className="hidden md:table-cell text-muted-foreground">{new Date(w.createdAt).toLocaleDateString()}</TableCell>
                             <TableCell className="text-right">
                               <div className="flex justify-end gap-1">
                                 {w.status === 'pending' && <>
-                                  <Button size="sm" variant="outline" className="h-7 px-2 text-green-600 hover:text-green-700 hover:bg-green-50" onClick={() => handleWithdrawal(w.id, 'approved')} disabled={actionLoading === w.id}>{actionLoading === w.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}</Button>
-                                  <Button size="sm" variant="outline" className="h-7 px-2 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => handleWithdrawal(w.id, 'rejected')} disabled={actionLoading === w.id}><X className="h-3.5 w-3.5" /></Button>
+                                  <Button size="sm" variant="outline" className="h-7 px-2 text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-500/10" onClick={() => handleWithdrawal(w.id, 'approved')} disabled={actionLoading === w.id}>{actionLoading === w.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}</Button>
+                                  <Button size="sm" variant="outline" className="h-7 px-2 text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-500/10" onClick={() => handleWithdrawal(w.id, 'rejected')} disabled={actionLoading === w.id}><X className="h-3.5 w-3.5" /></Button>
                                 </>}
                                 {w.status === 'approved' && (
-                                  <Button size="sm" variant="outline" className="h-7 px-2 text-green-600 hover:bg-green-50" onClick={() => handleWithdrawal(w.id, 'completed')} disabled={actionLoading === w.id}>
+                                  <Button size="sm" variant="outline" className="h-7 px-2 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-500/10" onClick={() => handleWithdrawal(w.id, 'completed')} disabled={actionLoading === w.id}>
                                     {actionLoading === w.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <><Check className="h-3.5 w-3.5 mr-1" />Complete</>}
                                   </Button>
                                 )}
@@ -912,14 +912,14 @@ export default function AdminPage() {
                         <TableRow key={c.id}>
                           <TableCell><div><p className="font-medium">{c.title}</p><p className="text-xs text-muted-foreground line-clamp-1">{c.description}</p></div></TableCell>
                           <TableCell className="hidden sm:table-cell"><Badge variant="secondary">{c.category}</Badge></TableCell>
-                          <TableCell><Badge variant="outline" className={c.difficulty === 'beginner' ? 'bg-green-100 text-green-700 border-green-200' : c.difficulty === 'intermediate' ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-red-100 text-red-700 border-red-200'}>{c.difficulty}</Badge></TableCell>
+                          <TableCell><Badge variant="outline" className={c.difficulty === 'beginner' ? 'bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-400 border-green-200 dark:border-green-500/20' : c.difficulty === 'intermediate' ? 'bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/20' : 'bg-red-100 dark:bg-red-500/10 text-red-700 dark:text-red-400 border-red-200 dark:border-red-500/20'}>{c.difficulty}</Badge></TableCell>
                           <TableCell className="hidden md:table-cell">{c.enrollmentsCount}</TableCell>
                           <TableCell className="hidden lg:table-cell text-muted-foreground">{new Date(c.createdAt).toLocaleDateString()}</TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-1">
                               <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => fetchCourseDetail(c.id)}><Eye className="h-3.5 w-3.5" /></Button>
                               <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => { setEditingCourse(c); setNewCourse({ title: c.title, description: c.description, difficulty: c.difficulty, category: c.category }); setCourseDialogOpen(true); }}><Edit className="h-3.5 w-3.5" /></Button>
-                              <Button variant="ghost" size="sm" className="h-7 px-2 text-red-500 hover:text-red-600" onClick={() => { setDeleteTarget({ type: 'course', id: c.id, title: c.title }); setDeleteDialogOpen(true); }}><Trash2 className="h-3.5 w-3.5" /></Button>
+                              <Button variant="ghost" size="sm" className="h-7 px-2 text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300" onClick={() => { setDeleteTarget({ type: 'course', id: c.id, title: c.title }); setDeleteDialogOpen(true); }}><Trash2 className="h-3.5 w-3.5" /></Button>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -957,7 +957,7 @@ export default function AdminPage() {
                           <TableCell className="hidden md:table-cell">{inv.duration}</TableCell>
                           <TableCell className="hidden md:table-cell">${inv.totalPool.toLocaleString()}</TableCell>
                           <TableCell className="hidden lg:table-cell">{inv.investorCount || 0}</TableCell>
-                          <TableCell><Badge className={inv.status === 'active' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-gray-100 text-gray-600 border-gray-200'} variant="outline">{inv.status}</Badge></TableCell>
+                          <TableCell><Badge className={inv.status === 'active' ? 'bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-400 border-green-200 dark:border-green-500/20' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700'} variant="outline">{inv.status}</Badge></TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-1">
                               <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => fetchInvestmentDetail(inv.id)}><Eye className="h-3.5 w-3.5" /></Button>
@@ -1009,10 +1009,10 @@ export default function AdminPage() {
                               <TableCell className="text-right">
                                 <div className="flex justify-end gap-1">
                                   <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => openViewEscrow(escrow)}><Eye className="h-3.5 w-3.5" /></Button>
-                                  {escrow.status === 'collecting' && <Button variant="ghost" size="sm" className="h-7 px-2 text-red-500 hover:text-red-600" onClick={() => openConfirm('cancel', escrow.id)}><Ban className="h-3.5 w-3.5" /></Button>}
+                                  {escrow.status === 'collecting' && <Button variant="ghost" size="sm" className="h-7 px-2 text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300" onClick={() => openConfirm('cancel', escrow.id)}><Ban className="h-3.5 w-3.5" /></Button>}
                                   {(escrow.status === 'funded' || escrow.status === 'active') && <>
-                                    <Button variant="ghost" size="sm" className="h-7 px-2 text-green-600 hover:text-green-700" onClick={() => openConfirm('release', escrow.id)}><DollarSign className="h-3.5 w-3.5" /></Button>
-                                    <Button variant="ghost" size="sm" className="h-7 px-2 text-red-500 hover:text-red-600" onClick={() => openConfirm('cancel', escrow.id)}><Ban className="h-3.5 w-3.5" /></Button>
+                                    <Button variant="ghost" size="sm" className="h-7 px-2 text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300" onClick={() => openConfirm('release', escrow.id)}><DollarSign className="h-3.5 w-3.5" /></Button>
+                                    <Button variant="ghost" size="sm" className="h-7 px-2 text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300" onClick={() => openConfirm('cancel', escrow.id)}><Ban className="h-3.5 w-3.5" /></Button>
                                   </>}
                                 </div>
                               </TableCell>
@@ -1080,9 +1080,9 @@ export default function AdminPage() {
                         <TableRow key={p.id}>
                           <TableCell className="font-medium">{p.userName}</TableCell>
                           <TableCell className="font-medium">${p.amount.toFixed(2)}</TableCell>
-                          <TableCell><Badge className={p.method === 'flutterwave' ? 'bg-green-100 text-green-700 border-green-200' : p.method === 'crypto' ? 'bg-orange/10 text-orange border-orange/20' : 'bg-gray-100 text-gray-600 border-gray-200'} variant="outline">{p.method}</Badge></TableCell>
+                          <TableCell><Badge className={p.method === 'flutterwave' ? 'bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-400 border-green-200 dark:border-green-500/20' : p.method === 'crypto' ? 'bg-orange/10 text-orange border-orange/20' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700'} variant="outline">{p.method}</Badge></TableCell>
                           <TableCell className="hidden sm:table-cell"><Badge variant="secondary">{p.type}</Badge></TableCell>
-                          <TableCell><Badge className={p.status === 'completed' ? 'bg-green-100 text-green-700 border-green-200' : p.status === 'pending' ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-red-100 text-red-700 border-red-200'} variant="outline">{p.status}</Badge></TableCell>
+                          <TableCell><Badge className={p.status === 'completed' ? 'bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-400 border-green-200 dark:border-green-500/20' : p.status === 'pending' ? 'bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/20' : 'bg-red-100 dark:bg-red-500/10 text-red-700 dark:text-red-400 border-red-200 dark:border-red-500/20'} variant="outline">{p.status}</Badge></TableCell>
                           <TableCell className="hidden lg:table-cell text-xs font-mono text-muted-foreground">{p.txRef.slice(0, 16)}</TableCell>
                           <TableCell className="hidden lg:table-cell text-muted-foreground">{new Date(p.createdAt).toLocaleDateString()}</TableCell>
                         </TableRow>
@@ -1123,7 +1123,7 @@ export default function AdminPage() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
                               <p className="font-medium text-sm">{b.title || 'Untitled'}</p>
-                              <Badge className={b.type === 'info' ? 'bg-blue-100 text-blue-700 border-blue-200' : b.type === 'success' ? 'bg-green-100 text-green-700 border-green-200' : b.type === 'warning' ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-red-100 text-red-700 border-red-200'} variant="outline">{b.type}</Badge>
+                              <Badge className={b.type === 'info' ? 'bg-blue-100 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/20' : b.type === 'success' ? 'bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-400 border-green-200 dark:border-green-500/20' : b.type === 'warning' ? 'bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/20' : 'bg-red-100 dark:bg-red-500/10 text-red-700 dark:text-red-400 border-red-200 dark:border-red-500/20'} variant="outline">{b.type}</Badge>
                             </div>
                             <p className="text-sm text-muted-foreground line-clamp-2">{b.message}</p>
                           </div>
@@ -1177,7 +1177,7 @@ export default function AdminPage() {
                           <p className="font-semibold">{plan.name}</p>
                           <p className="text-2xl font-bold text-gold">{plan.price}<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
                         </div>
-                        <Badge className="bg-green-100 text-green-700 border-green-200" variant="outline">Active</Badge>
+                        <Badge className="bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-400 border-green-200 dark:border-green-500/20" variant="outline">Active</Badge>
                       </div>
                       <p className="text-xs text-muted-foreground">{plan.features}</p>
                     </div>
@@ -1231,7 +1231,7 @@ export default function AdminPage() {
                   <div className="rounded-lg bg-muted/50 p-3"><p className="text-[10px] text-muted-foreground uppercase">Balance</p><p className="text-sm font-semibold text-gold">${userDetail.balance.toFixed(2)}</p></div>
                 </div>
                 {userDetail.transactions && userDetail.transactions.length > 0 && (
-                  <><Separator /><div><h4 className="text-sm font-semibold mb-3">Recent Transactions</h4><div className="rounded-lg border"><Table><TableHeader><TableRow><TableHead>Description</TableHead><TableHead>Amount</TableHead><TableHead>Status</TableHead></TableRow></TableHeader><TableBody>{userDetail.transactions.slice(0, 10).map((t) => <TableRow key={t.id}><TableCell className="text-sm">{t.description}</TableCell><TableCell className="text-sm font-medium">${t.amount.toFixed(2)}</TableCell><TableCell><Badge className={t.status === 'completed' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-amber-100 text-amber-700 border-amber-200'} variant="outline">{t.status}</Badge></TableCell></TableRow>)}</TableBody></Table></div></div></>
+                  <><Separator /><div><h4 className="text-sm font-semibold mb-3">Recent Transactions</h4><div className="rounded-lg border"><Table><TableHeader><TableRow><TableHead>Description</TableHead><TableHead>Amount</TableHead><TableHead>Status</TableHead></TableRow></TableHeader><TableBody>{userDetail.transactions.slice(0, 10).map((t) => <TableRow key={t.id}><TableCell className="text-sm">{t.description}</TableCell><TableCell className="text-sm font-medium">${t.amount.toFixed(2)}</TableCell><TableCell><Badge className={t.status === 'completed' ? 'bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-400 border-green-200 dark:border-green-500/20' : 'bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/20'} variant="outline">{t.status}</Badge></TableCell></TableRow>)}</TableBody></Table></div></div></>
                 )}
                 {userDetail.coursesEnrolled && userDetail.coursesEnrolled.length > 0 && (
                   <><Separator /><div><h4 className="text-sm font-semibold mb-3">Enrolled Courses</h4><div className="space-y-2">{userDetail.coursesEnrolled.map((c, i) => <div key={i} className="flex items-center justify-between rounded-lg border p-3"><span className="text-sm">{c.title}</span><div className="flex items-center gap-2"><Progress value={c.progress} className="h-2 w-20" /><span className="text-xs text-muted-foreground">{c.progress}%</span></div></div>)}</div></div></>
@@ -1307,7 +1307,7 @@ export default function AdminPage() {
           <DialogHeader><DialogTitle>Delete {deleteTarget?.type}</DialogTitle><DialogDescription>Are you sure you want to delete &quot;{deleteTarget?.title}&quot;? This action cannot be undone.</DialogDescription></DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => { setDeleteDialogOpen(false); setDeleteTarget(null); }}>Cancel</Button>
-            <Button className="bg-red-500 text-white hover:bg-red-600" onClick={handleDeleteCourse} disabled={deleting}>{deleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Delete</Button>
+            <Button className="bg-red-500 dark:bg-red-600 text-white hover:bg-red-600 dark:hover:bg-red-700" onClick={handleDeleteCourse} disabled={deleting}>{deleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Delete</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1349,7 +1349,7 @@ export default function AdminPage() {
                   <div className="rounded-lg bg-muted/50 p-3"><p className="text-[10px] text-muted-foreground uppercase">Status</p><p className="text-sm font-semibold">{investDetail.status}</p></div>
                 </div>
                 {investDetail.investors && investDetail.investors.length > 0 ? (
-                  <><Separator /><div className="rounded-lg border"><Table><TableHeader><TableRow><TableHead>Investor</TableHead><TableHead>Amount</TableHead><TableHead>Expected Return</TableHead><TableHead>Status</TableHead><TableHead className="hidden sm:table-cell">Start</TableHead><TableHead className="hidden sm:table-cell">End</TableHead></TableRow></TableHeader><TableBody>{investDetail.investors.map((inv, i) => <TableRow key={i}><TableCell className="font-medium">{inv.name}</TableCell><TableCell>${inv.amount.toFixed(2)}</TableCell><TableCell className="text-gold font-medium">${inv.expectedReturn.toFixed(2)}</TableCell><TableCell><Badge className="bg-green-100 text-green-700 border-green-200" variant="outline">{inv.status}</Badge></TableCell><TableCell className="hidden sm:table-cell text-muted-foreground">{new Date(inv.startDate).toLocaleDateString()}</TableCell><TableCell className="hidden sm:table-cell text-muted-foreground">{inv.endDate ? new Date(inv.endDate).toLocaleDateString() : '-'}</TableCell></TableRow>)}</TableBody></Table></div></>
+                  <><Separator /><div className="rounded-lg border"><Table><TableHeader><TableRow><TableHead>Investor</TableHead><TableHead>Amount</TableHead><TableHead>Expected Return</TableHead><TableHead>Status</TableHead><TableHead className="hidden sm:table-cell">Start</TableHead><TableHead className="hidden sm:table-cell">End</TableHead></TableRow></TableHeader><TableBody>{investDetail.investors.map((inv, i) => <TableRow key={i}><TableCell className="font-medium">{inv.name}</TableCell><TableCell>${inv.amount.toFixed(2)}</TableCell><TableCell className="text-gold font-medium">${inv.expectedReturn.toFixed(2)}</TableCell><TableCell><Badge className="bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-400 border-green-200 dark:border-green-500/20" variant="outline">{inv.status}</Badge></TableCell><TableCell className="hidden sm:table-cell text-muted-foreground">{new Date(inv.startDate).toLocaleDateString()}</TableCell><TableCell className="hidden sm:table-cell text-muted-foreground">{inv.endDate ? new Date(inv.endDate).toLocaleDateString() : '-'}</TableCell></TableRow>)}</TableBody></Table></div></>
                 ) : <p className="py-4 text-center text-sm text-muted-foreground">No investors yet.</p>}
               </div>
             </ScrollArea>
@@ -1411,15 +1411,15 @@ export default function AdminPage() {
                 <div className="space-y-2">
                   {milestones.map((m, i) => (
                     <motion.div key={i} initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="rounded-lg border border-border p-3 space-y-2">
-                      <div className="flex items-start justify-between"><span className="text-xs font-medium text-muted-foreground">Milestone {i + 1}</span><Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-red-500 hover:text-red-600" onClick={() => removeMilestone(i)}><X className="h-3.5 w-3.5" /></Button></div>
+                      <div className="flex items-start justify-between"><span className="text-xs font-medium text-muted-foreground">Milestone {i + 1}</span><Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300" onClick={() => removeMilestone(i)}><X className="h-3.5 w-3.5" /></Button></div>
                       <div className="grid grid-cols-3 gap-2"><div className="col-span-2 space-y-1"><Input placeholder="Title" value={m.title} onChange={(e) => updateMilestone(i, 'title', e.target.value)} className="h-8 text-xs" /></div><div className="space-y-1"><Input type="number" placeholder="%" value={m.percentage} onChange={(e) => updateMilestone(i, 'percentage', e.target.value)} className="h-8 text-xs" /></div></div>
                       <Input placeholder="Description (optional)" value={m.description} onChange={(e) => updateMilestone(i, 'description', e.target.value)} className="h-8 text-xs" />
                     </motion.div>
                   ))}
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-muted-foreground">Total: {milestoneTotal}%</span>
-                    {milestoneTotal > 0 && milestoneTotal !== 100 && <span className={milestoneTotal > 100 ? 'text-red-500 font-medium' : 'text-amber-600'}>{milestoneTotal > 100 ? 'Exceeds 100%' : 'Must equal 100%'}</span>}
-                    {milestoneTotal === 100 && <span className="text-green-600 font-medium">Valid</span>}
+                    {milestoneTotal > 0 && milestoneTotal !== 100 && <span className={milestoneTotal > 100 ? 'text-red-500 dark:text-red-400 font-medium' : 'text-amber-600 dark:text-amber-400'}>{milestoneTotal > 100 ? 'Exceeds 100%' : 'Must equal 100%'}</span>}
+                    {milestoneTotal === 100 && <span className="text-green-600 dark:text-green-400 font-medium">Valid</span>}
                   </div>
                 </div>
               )}
@@ -1460,28 +1460,28 @@ export default function AdminPage() {
                   <><Separator /><div><h4 className="text-sm font-semibold mb-3 flex items-center gap-2"><ChevronRight className="h-4 w-4 text-orange" />Milestones ({viewEscrow.milestones.length})</h4><div className="space-y-2">{viewEscrow.milestones.map((ms) => (
                     <div key={ms.id} className="flex items-center justify-between rounded-lg border p-3">
                       <div className="flex-1 min-w-0"><div className="flex items-center gap-2"><p className="text-sm font-medium">{ms.title}</p><Badge className={MILESTONE_STATUS_BADGE[ms.status] || 'bg-muted text-muted-foreground'} variant="outline">{ms.status}</Badge></div>{ms.description && <p className="text-xs text-muted-foreground mt-0.5">{ms.description}</p>}</div>
-                      <div className="flex items-center gap-3 ml-3"><span className="text-sm font-semibold text-gold">{ms.percentage}%</span>{ms.status === 'held' && <Button size="sm" variant="outline" className="h-7 text-xs text-green-600 hover:text-green-700 hover:bg-green-50" onClick={() => openConfirm('release', viewEscrow.id, { milestoneId: ms.id })}>Release</Button>}</div>
+                      <div className="flex items-center gap-3 ml-3"><span className="text-sm font-semibold text-gold">{ms.percentage}%</span>{ms.status === 'held' && <Button size="sm" variant="outline" className="h-7 text-xs text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-500/10" onClick={() => openConfirm('release', viewEscrow.id, { milestoneId: ms.id })}>Release</Button>}</div>
                     </div>
                   ))}</div></div></>
                 )}
                 {viewEscrow.disputes.length > 0 && (
-                  <><Separator /><div><h4 className="text-sm font-semibold mb-3 flex items-center gap-2"><AlertTriangle className="h-4 w-4 text-red-500" />Disputes ({viewEscrow.disputes.length})</h4><div className="space-y-3">{viewEscrow.disputes.map((d) => (
-                    <div key={d.id} className="rounded-lg border border-red/20 bg-red-50/50 p-3">
+                  <><Separator /><div><h4 className="text-sm font-semibold mb-3 flex items-center gap-2"><AlertTriangle className="h-4 w-4 text-red-500 dark:text-red-400" />Disputes ({viewEscrow.disputes.length})</h4><div className="space-y-3">{viewEscrow.disputes.map((d) => (
+                    <div key={d.id} className="rounded-lg border border-red/20 bg-red-50/50 dark:bg-red-500/10 p-3">
                       <div className="flex items-start justify-between gap-2 mb-2"><div><p className="text-sm font-medium">{d.userName}</p><p className="text-xs text-muted-foreground">{new Date(d.date).toLocaleDateString()}</p></div><Badge className={DISPUTE_ADMIN_STATUS_BADGE[d.status] || 'bg-muted text-muted-foreground'} variant="outline">{d.status}</Badge></div>
                       <p className="text-sm">{d.reason}</p>{d.evidence && <p className="text-xs text-muted-foreground mt-1">Evidence: {d.evidence}</p>}
-                      {d.resolution && <div className="mt-2 rounded bg-green-100 p-2 text-xs text-green-800">{d.resolution}</div>}
+                      {d.resolution && <div className="mt-2 rounded bg-green-100 dark:bg-green-500/10 p-2 text-xs text-green-800 dark:text-green-300">{d.resolution}</div>}
                       {(d.status === 'open' || d.status === 'reviewing') && (
                         <div className="flex gap-2 mt-3">
                           <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => openResolveDispute(viewEscrow.id, d.id, 'dismiss')}><X className="mr-1 h-3 w-3" />Dismiss</Button>
                           <Button size="sm" variant="outline" className="h-7 text-xs text-orange hover:bg-orange/10" onClick={() => openResolveDispute(viewEscrow.id, d.id, 'refund_all')}><RotateCcw className="mr-1 h-3 w-3" />Refund All</Button>
-                          <Button size="sm" variant="outline" className="h-7 text-xs text-green-600 hover:bg-green-50" onClick={() => openResolveDispute(viewEscrow.id, d.id, 'release_all')}><Check className="mr-1 h-3 w-3" />Release All</Button>
+                          <Button size="sm" variant="outline" className="h-7 text-xs text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-500/10" onClick={() => openResolveDispute(viewEscrow.id, d.id, 'release_all')}><Check className="mr-1 h-3 w-3" />Release All</Button>
                         </div>
                       )}
                     </div>
                   ))}</div></div></>
                 )}
-                {(viewEscrow.status === 'funded' || viewEscrow.status === 'active') && <><Separator /><div className="flex flex-wrap gap-2"><Button variant="outline" className="text-green-600 hover:text-green-700 hover:bg-green-50" onClick={() => openConfirm('release', viewEscrow.id)}><DollarSign className="mr-2 h-4 w-4" />Release All Funds</Button><Button variant="outline" className="text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => openConfirm('refund', viewEscrow.id)}><RotateCcw className="mr-2 h-4 w-4" />Refund All</Button><Button variant="outline" className="text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => openConfirm('cancel', viewEscrow.id)}><Ban className="mr-2 h-4 w-4" />Cancel Escrow</Button></div></>}
-                {viewEscrow.status === 'collecting' && <><Separator /><div className="flex flex-wrap gap-2"><Button variant="outline" className="text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => openConfirm('cancel', viewEscrow.id)}><Ban className="mr-2 h-4 w-4" />Cancel Escrow</Button></div></>}
+                {(viewEscrow.status === 'funded' || viewEscrow.status === 'active') && <><Separator /><div className="flex flex-wrap gap-2"><Button variant="outline" className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-500/10" onClick={() => openConfirm('release', viewEscrow.id)}><DollarSign className="mr-2 h-4 w-4" />Release All Funds</Button><Button variant="outline" className="text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-500/10" onClick={() => openConfirm('refund', viewEscrow.id)}><RotateCcw className="mr-2 h-4 w-4" />Refund All</Button><Button variant="outline" className="text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-500/10" onClick={() => openConfirm('cancel', viewEscrow.id)}><Ban className="mr-2 h-4 w-4" />Cancel Escrow</Button></div></>}
+                {viewEscrow.status === 'collecting' && <><Separator /><div className="flex flex-wrap gap-2"><Button variant="outline" className="text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-500/10" onClick={() => openConfirm('cancel', viewEscrow.id)}><Ban className="mr-2 h-4 w-4" />Cancel Escrow</Button></div></>}
               </div>
             </ScrollArea>
           )}
@@ -1498,7 +1498,7 @@ export default function AdminPage() {
           <div className="space-y-2"><Label>{confirmAction?.type === 'cancel' ? 'Reason' : 'Notes'} (optional)</Label><Textarea placeholder={confirmAction?.type === 'cancel' ? 'Reason for cancellation...' : 'Additional notes...'} value={confirmNotes} onChange={(e) => setConfirmNotes(e.target.value)} rows={2} /></div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfirmDialogOpen(false)}>Cancel</Button>
-            <Button className={confirmAction?.type === 'release' ? 'bg-green-600 text-white hover:bg-green-700' : confirmAction?.type === 'refund' ? 'bg-orange text-white hover:bg-orange-dark' : 'bg-red-500 text-white hover:bg-red-600'} onClick={handleConfirmAction} disabled={confirming}>{confirming && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{confirming ? 'Processing...' : 'Confirm'}</Button>
+            <Button className={confirmAction?.type === 'release' ? 'bg-green-600 dark:bg-green-700 text-white hover:bg-green-700 dark:hover:bg-green-800' : confirmAction?.type === 'refund' ? 'bg-orange text-white hover:bg-orange-dark' : 'bg-red-500 dark:bg-red-600 text-white hover:bg-red-600 dark:hover:bg-red-700'} onClick={handleConfirmAction} disabled={confirming}>{confirming && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{confirming ? 'Processing...' : 'Confirm'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

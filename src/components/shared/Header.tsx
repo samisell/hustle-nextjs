@@ -12,6 +12,7 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useAuthStore } from '@/store/auth';
+import ThemeToggle from '@/components/shared/ThemeToggle';
 import type { Page } from './Sidebar';
 
 interface HeaderProps {
@@ -58,6 +59,9 @@ export default function Header({ onMenuToggle, activePage, onNavigate, unreadCou
       </div>
 
       <div className="flex items-center gap-2">
+        {/* Theme Toggle */}
+        <ThemeToggle />
+
         {/* Notification bell - navigates to notifications */}
         <Button
           variant="ghost"

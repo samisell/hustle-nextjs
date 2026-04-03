@@ -257,10 +257,10 @@ export default function ProfilePage() {
 
   const getPlanBadge = (plan: string) => {
     const colors: Record<string, string> = {
-      basic: 'bg-gray-100 text-gray-700',
+      basic: 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300',
       pro: 'bg-gold/10 text-gold border-gold/20',
-      premium: 'bg-purple-100 text-purple-700',
-      none: 'bg-gray-100 text-gray-500',
+      premium: 'bg-purple-100 dark:bg-purple-500/10 text-purple-700 dark:text-purple-400',
+      none: 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400',
     };
     return colors[plan] || colors.none;
   };
@@ -287,9 +287,9 @@ export default function ProfilePage() {
   };
 
   const statCards = [
-    { icon: BookOpen, label: 'Courses Enrolled', value: stats.totalEnrolled, color: 'bg-blue-100 text-blue-600' },
-    { icon: Award, label: 'Courses Completed', value: stats.completedCourses, color: 'bg-green-100 text-green-600' },
-    { icon: TrendingUp, label: 'Investments', value: stats.totalInvestments, color: 'bg-purple-100 text-purple-600' },
+    { icon: BookOpen, label: 'Courses Enrolled', value: stats.totalEnrolled, color: 'bg-blue-100 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400' },
+    { icon: Award, label: 'Courses Completed', value: stats.completedCourses, color: 'bg-green-100 dark:bg-green-500/10 text-green-600 dark:text-green-400' },
+    { icon: TrendingUp, label: 'Investments', value: stats.totalInvestments, color: 'bg-purple-100 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400' },
     { icon: Users, label: 'Referrals', value: stats.totalReferrals, color: 'bg-orange-100 text-orange-600' },
     { icon: Wallet, label: 'Wallet Balance', value: `$${stats.walletBalance.toFixed(2)}`, color: 'bg-gold/10 text-gold' },
   ];
@@ -433,7 +433,7 @@ export default function ProfilePage() {
                       {displayUser.referralCode}
                     </code>
                     <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={copyReferralCode}>
-                      {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5 text-muted-foreground" />}
+                      {copied ? <Check className="h-3.5 w-3.5 text-green-500 dark:text-green-400" /> : <Copy className="h-3.5 w-3.5 text-muted-foreground" />}
                     </Button>
                   </div>
                 </div>
@@ -484,8 +484,8 @@ export default function ProfilePage() {
                     variant="outline"
                     className={
                       displayUser.subscription.status === 'active'
-                        ? 'border-green-300 text-green-700 bg-green-50'
-                        : 'border-gray-300 text-gray-500 bg-gray-50'
+                        ? 'border-green-300 dark:border-green-500/30 text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-500/10'
+                        : 'border-gray-300 dark:border-gray-700 text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800'
                     }
                   >
                     {displayUser.subscription.status === 'active' ? 'Active' : 'Inactive'}
@@ -643,13 +643,13 @@ export default function ProfilePage() {
                     <div className="flex flex-col items-center">
                       <div
                         className={`flex h-8 w-8 items-center justify-center rounded-full shrink-0 ${
-                          tx.type === 'credit' ? 'bg-green-100' : 'bg-red-100'
+                          tx.type === 'credit' ? 'bg-green-100 dark:bg-green-500/10' : 'bg-red-100 dark:bg-red-500/10'
                         }`}
                       >
                         {tx.type === 'credit' ? (
-                          <ArrowDownRight className="h-4 w-4 text-green-600" />
+                          <ArrowDownRight className="h-4 w-4 text-green-600 dark:text-green-400" />
                         ) : (
-                          <ArrowUpRight className="h-4 w-4 text-red-500" />
+                          <ArrowUpRight className="h-4 w-4 text-red-500 dark:text-red-400" />
                         )}
                       </div>
                       {index < recentTransactions.length - 1 && (
@@ -662,7 +662,7 @@ export default function ProfilePage() {
                         <p className="text-sm font-medium text-foreground">{tx.description}</p>
                         <span
                           className={`text-sm font-semibold ${
-                            tx.type === 'credit' ? 'text-green-600' : 'text-red-500'
+                            tx.type === 'credit' ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'
                           }`}
                         >
                           {tx.type === 'credit' ? '+' : '-'}${tx.amount.toFixed(2)}

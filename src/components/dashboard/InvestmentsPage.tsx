@@ -208,7 +208,7 @@ export default function InvestmentsPage() {
                           <CardTitle className="text-base">{opp.title}</CardTitle>
                           <CardDescription className="mt-1">{opp.description}</CardDescription>
                         </div>
-                        <Badge className="bg-green-100 text-green-700 border-green-200" variant="outline">
+                        <Badge className="bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-400 border-green-200 dark:border-green-500/20" variant="outline">
                           Active
                         </Badge>
                       </div>
@@ -278,9 +278,9 @@ export default function InvestmentsPage() {
                         <TableCell>
                           <Badge className={
                             inv.status === 'active'
-                              ? 'bg-green-100 text-green-700 border-green-200'
+                              ? 'bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-400 border-green-200 dark:border-green-500/20'
                               : inv.status === 'completed'
-                              ? 'bg-blue-100 text-blue-700 border-blue-200'
+                              ? 'bg-blue-100 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/20'
                               : 'bg-muted text-muted-foreground'
                           } variant="outline">
                             {inv.status}

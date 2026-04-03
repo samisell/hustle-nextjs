@@ -236,11 +236,11 @@ export default function SettingsPage() {
 
   const getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
-      learning: 'bg-blue-100 text-blue-600',
-      referral: 'bg-orange-100 text-orange-600',
-      investment: 'bg-purple-100 text-purple-600',
-      engagement: 'bg-green-100 text-green-600',
-      general: 'bg-gray-100 text-gray-600',
+      learning: 'bg-blue-100 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400',
+      referral: 'bg-orange-100 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400',
+      investment: 'bg-purple-100 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400',
+      engagement: 'bg-green-100 dark:bg-green-500/10 text-green-600 dark:text-green-400',
+      general: 'bg-gray-100 dark:bg-gray-500/10 text-gray-600 dark:text-gray-400',
     };
     return colors[category] || colors.general;
   };
@@ -514,8 +514,8 @@ export default function SettingsPage() {
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between rounded-lg border p-4">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100">
-                      <Check className="h-5 w-5 text-green-600" />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 dark:bg-green-500/10">
+                      <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
                     </div>
                     <div>
                       <p className="text-sm font-medium">Current Session</p>
@@ -526,7 +526,7 @@ export default function SettingsPage() {
                       </p>
                     </div>
                   </div>
-                  <Badge className="bg-green-100 text-green-700 border-0">Active</Badge>
+                  <Badge className="bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-400 border-0">Active</Badge>
                 </div>
                 <Separator />
                 <div className="flex items-center justify-between">
@@ -639,9 +639,9 @@ export default function SettingsPage() {
             </Card>
 
             {/* Danger Zone */}
-            <Card className="border-red-200">
+            <Card className="border-red-200 dark:border-red-500/20">
               <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2 text-red-600">
+                <CardTitle className="text-base flex items-center gap-2 text-red-600 dark:text-red-400">
                   <Trash2 className="h-4 w-4" />
                   Danger Zone
                 </CardTitle>
@@ -650,10 +650,10 @@ export default function SettingsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center justify-between rounded-lg border border-red-200 bg-red-50 p-4">
+                <div className="flex items-center justify-between rounded-lg border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 p-4">
                   <div>
-                    <p className="text-sm font-medium text-red-800">Delete Account</p>
-                    <p className="text-xs text-red-600">
+                    <p className="text-sm font-medium text-red-800 dark:text-red-300">Delete Account</p>
+                    <p className="text-xs text-red-600 dark:text-red-400">
                       Once deleted, your account cannot be recovered. All data will be permanently removed.
                     </p>
                   </div>
@@ -697,10 +697,10 @@ export default function SettingsPage() {
                   </div>
                 </CardContent>
               </Card>
-              <Card className="border-green-200">
+              <Card className="border-green-200 dark:border-green-500/20">
                 <CardContent className="p-4 flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100">
-                    <Zap className="h-5 w-5 text-green-600" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 dark:bg-green-500/10">
+                    <Zap className="h-5 w-5 text-green-600 dark:text-green-400" />
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-foreground">
@@ -831,7 +831,7 @@ export default function SettingsPage() {
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-red-600">
+            <DialogTitle className="flex items-center gap-2 text-red-600 dark:text-red-400">
               <Trash2 className="h-5 w-5" />
               Delete Account
             </DialogTitle>
@@ -840,9 +840,9 @@ export default function SettingsPage() {
               All your data, including wallet balance, investments, and course progress, will be permanently removed.
             </DialogDescription>
           </DialogHeader>
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-            <p className="text-sm text-red-800 font-medium">Warning: This action cannot be reversed!</p>
-            <p className="text-xs text-red-600 mt-1">
+          <div className="rounded-lg border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 p-4">
+            <p className="text-sm text-red-800 dark:text-red-300 font-medium">Warning: This action cannot be reversed!</p>
+            <p className="text-xs text-red-600 dark:text-red-400 mt-1">
               Your wallet balance, investments, course progress, referrals, and all other data will be lost forever.
             </p>
           </div>

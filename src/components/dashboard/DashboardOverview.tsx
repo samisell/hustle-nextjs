@@ -133,22 +133,22 @@ export default function DashboardOverview({ onNavigate }: { onNavigate?: (page: 
   const getActivityIcon = (type: Activity['type']) => {
     switch (type) {
       case 'credit':
-        return <ArrowDownRight className="h-4 w-4 text-green-600" />;
+        return <ArrowDownRight className="h-4 w-4 text-green-600 dark:text-green-400" />;
       case 'debit':
-        return <ArrowUpRight className="h-4 w-4 text-red-500" />;
+        return <ArrowUpRight className="h-4 w-4 text-red-500 dark:text-red-400" />;
       case 'enrollment':
         return <BookCheck className="h-4 w-4 text-gold" />;
       case 'referral':
         return <Gift className="h-4 w-4 text-orange" />;
       case 'investment':
-        return <TrendingUp className="h-4 w-4 text-purple-500" />;
+        return <TrendingUp className="h-4 w-4 text-purple-500 dark:text-purple-400" />;
     }
   };
 
   const planColors: Record<string, string> = {
-    basic: 'bg-zinc-100 text-zinc-700 border-zinc-200',
+    basic: 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700',
     pro: 'bg-gold/10 text-gold border-gold/20',
-    premium: 'bg-purple-100 text-purple-700 border-purple-200',
+    premium: 'bg-purple-100 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-500/20',
   };
 
   const planIcons: Record<string, React.ElementType> = {
@@ -207,7 +207,7 @@ export default function DashboardOverview({ onNavigate }: { onNavigate?: (page: 
                 <p className="text-sm font-medium text-muted-foreground">Total Balance</p>
                 <p className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">${stats.balance.toFixed(2)}</p>
                 <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1 justify-end">
-                  <span className="flex items-center gap-1 text-green-600"><TrendingUp className="h-3 w-3" />+$0 today</span>
+                  <span className="flex items-center gap-1 text-green-600 dark:text-green-400"><TrendingUp className="h-3 w-3" />+$0 today</span>
                 </div>
               </div>
             </div>
@@ -369,8 +369,8 @@ export default function DashboardOverview({ onNavigate }: { onNavigate?: (page: 
                 <p className="text-2xl font-bold text-foreground">{learningProgress.totalEnrolled}</p>
                 <p className="text-xs text-muted-foreground">Enrolled</p>
               </div>
-              <div className="rounded-lg bg-green-50 border border-green-100 p-4 text-center">
-                <BookCheck className="h-5 w-5 text-green-600 mx-auto mb-1" />
+              <div className="rounded-lg bg-green-50 dark:bg-green-500/10 border border-green-100 dark:border-green-500/20 p-4 text-center">
+                <BookCheck className="h-5 w-5 text-green-600 dark:text-green-400 mx-auto mb-1" />
                 <p className="text-2xl font-bold text-foreground">{learningProgress.completed}</p>
                 <p className="text-xs text-muted-foreground">Completed</p>
               </div>
@@ -421,8 +421,8 @@ export default function DashboardOverview({ onNavigate }: { onNavigate?: (page: 
                 <p className="text-lg font-bold text-foreground">${investmentSummary.totalReturns.toFixed(0)}</p>
                 <p className="text-xs text-muted-foreground">Expected</p>
               </div>
-              <div className="rounded-lg bg-green-50 border border-green-100 p-4 text-center">
-                <Target className="h-5 w-5 text-green-600 mx-auto mb-1" />
+              <div className="rounded-lg bg-green-50 dark:bg-green-500/10 border border-green-100 dark:border-green-500/20 p-4 text-center">
+                <Target className="h-5 w-5 text-green-600 dark:text-green-400 mx-auto mb-1" />
                 <p className="text-lg font-bold text-foreground">{investmentSummary.activeCount}</p>
                 <p className="text-xs text-muted-foreground">Active</p>
               </div>
@@ -431,7 +431,7 @@ export default function DashboardOverview({ onNavigate }: { onNavigate?: (page: 
               <div className="rounded-lg bg-muted/30 p-3">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Expected ROI</span>
-                  <span className="font-semibold text-green-600">
+                  <span className="font-semibold text-green-600 dark:text-green-400">
                     +${(investmentSummary.totalReturns - investmentSummary.totalInvested).toFixed(2)}
                   </span>
                 </div>
@@ -490,8 +490,8 @@ export default function DashboardOverview({ onNavigate }: { onNavigate?: (page: 
             {[
               { label: 'Browse Courses', icon: BookOpen, color: 'bg-gold/10 text-gold', page: 'courses' as const },
               { label: 'Refer a Friend', icon: Users, color: 'bg-orange/10 text-orange', page: 'referrals' as const },
-              { label: 'Invest Now', icon: TrendingUp, color: 'bg-green-500/10 text-green-600', page: 'investments' as const },
-              { label: 'Withdraw Funds', icon: DollarSign, color: 'bg-purple-500/10 text-purple-600', page: 'wallet' as const },
+              { label: 'Invest Now', icon: TrendingUp, color: 'bg-green-500/10 text-green-600 dark:text-green-400', page: 'investments' as const },
+              { label: 'Withdraw Funds', icon: DollarSign, color: 'bg-purple-500/10 text-purple-600 dark:text-purple-400', page: 'wallet' as const },
             ].map((action) => (
               <motion.div key={action.label} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Button

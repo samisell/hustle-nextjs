@@ -346,16 +346,16 @@ export default function SubscriptionPage() {
       )}
       {paymentSuccess && (
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
-          <Alert className="border-green-300 bg-green-50">
-            <Check className="h-4 w-4 text-green-600" />
-            <AlertDescription className="text-green-800">{paymentSuccess}</AlertDescription>
+          <Alert className="border-green-300 bg-green-50 dark:border-green-500/30 dark:bg-green-500/10">
+            <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
+            <AlertDescription className="text-green-800 dark:text-green-300">{paymentSuccess}</AlertDescription>
           </Alert>
         </motion.div>
       )}
       {paymentError && (
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
-          <Alert className="border-red-300 bg-red-50">
-            <AlertDescription className="text-red-800">{paymentError}</AlertDescription>
+          <Alert className="border-red-300 bg-red-50 dark:border-red-500/30 dark:bg-red-500/10">
+            <AlertDescription className="text-red-800 dark:text-red-300">{paymentError}</AlertDescription>
           </Alert>
         </motion.div>
       )}
@@ -372,7 +372,7 @@ export default function SubscriptionPage() {
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="text-xl font-bold text-foreground capitalize">{subscription.plan} Plan</h3>
-                    <Badge className={subscription.status === 'active' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-muted text-muted-foreground'} variant="outline">
+                    <Badge className={subscription.status === 'active' ? 'bg-green-100 text-green-700 border-green-200 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/20' : 'bg-muted text-muted-foreground'} variant="outline">
                       {subscription.status}
                     </Badge>
                   </div>
@@ -462,7 +462,7 @@ export default function SubscriptionPage() {
                       <TableCell className="text-muted-foreground">{new Date(p.createdAt).toLocaleDateString()}</TableCell>
                       <TableCell>
                         {p.paymentMethod === 'flutterwave' ? (
-                          <Badge variant="outline" className="text-xs font-normal bg-green-50 text-green-700 border-green-200"><Landmark className="h-3 w-3 mr-1" />Flutterwave</Badge>
+                          <Badge variant="outline" className="text-xs font-normal bg-green-50 text-green-700 border-green-200 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/20"><Landmark className="h-3 w-3 mr-1" />Flutterwave</Badge>
                         ) : p.paymentMethod === 'cryptomus' ? (
                           <Badge variant="outline" className="text-xs font-normal bg-orange-50 text-orange-700 border-orange-200"><Bitcoin className="h-3 w-3 mr-1" />Crypto</Badge>
                         ) : (
@@ -470,7 +470,7 @@ export default function SubscriptionPage() {
                         )}
                       </TableCell>
                       <TableCell>
-                        <Badge className={p.status === 'completed' ? 'bg-green-100 text-green-700 border-green-200' : p.status === 'failed' ? 'bg-red-100 text-red-700 border-red-200' : 'bg-amber-100 text-amber-700 border-amber-200'} variant="outline">{p.status}</Badge>
+                        <Badge className={p.status === 'completed' ? 'bg-green-100 text-green-700 border-green-200 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/20' : p.status === 'failed' ? 'bg-red-100 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20' : 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20'} variant="outline">{p.status}</Badge>
                       </TableCell>
                       <TableCell className="text-right font-medium">${p.amount.toFixed(2)}</TableCell>
                     </TableRow>
@@ -507,7 +507,7 @@ export default function SubscriptionPage() {
                       onClick={() => setSelectedMethod('flutterwave')}
                       className={`w-full flex items-center gap-3 rounded-lg border p-3 text-left transition-colors ${selectedMethod === 'flutterwave' ? 'border-gold bg-gold/5 ring-1 ring-gold/20' : 'border-muted hover:bg-muted/50'}`}
                     >
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100"><Landmark className="h-5 w-5 text-green-600" /></div>
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 dark:bg-green-500/10"><Landmark className="h-5 w-5 text-green-600 dark:text-green-400" /></div>
                       <div className="flex-1">
                         <p className="font-medium text-sm">Card / Bank Transfer</p>
                         <p className="text-xs text-muted-foreground">Pay with Visa, Mastercard, bank transfer via Flutterwave</p>

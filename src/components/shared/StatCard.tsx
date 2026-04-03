@@ -37,7 +37,7 @@ export default function StatCard({ title, value, description, icon: Icon, trend,
               <span
                 className={cn(
                   'text-xs font-semibold',
-                  trend.value >= 0 ? 'text-green-600' : 'text-red-500'
+                  trend.value >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'
                 )}
               >
                 {trend.value >= 0 ? '+' : ''}{trend.value}%

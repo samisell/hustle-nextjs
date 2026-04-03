@@ -142,7 +142,7 @@ export default function ReferralsPage() {
                   <code className="text-lg font-bold text-gold tracking-wider">{referralCode || 'LOADING...'}</code>
                 </div>
                 <Button size="icon" variant="outline" onClick={copyToClipboard}>
-                  {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                  {copied ? <Check className="h-4 w-4 text-green-500 dark:text-green-400" /> : <Copy className="h-4 w-4" />}
                 </Button>
                 <Button size="icon" variant="outline" onClick={handleShare}>
                   <Share2 className="h-4 w-4" />
@@ -215,7 +215,7 @@ export default function ReferralsPage() {
                       <TableCell className="hidden sm:table-cell text-muted-foreground">{u.email}</TableCell>
                       <TableCell>
                         <Badge variant={u.status === 'active' ? 'default' : 'secondary'} className={
-                          u.status === 'active' ? 'bg-green-100 text-green-700 border-green-200' : ''
+                          u.status === 'active' ? 'bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-400 border-green-200 dark:border-green-500/20' : ''
                         }>
                           {u.status}
                         </Badge>

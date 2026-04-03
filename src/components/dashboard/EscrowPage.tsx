@@ -96,11 +96,11 @@ type PaymentMethod = 'wallet' | 'card' | 'crypto';
 /* ─────────────── Helpers ─────────────── */
 
 const STATUS_BADGE: Record<EscrowStatus, string> = {
-  collecting: 'bg-amber-100 text-amber-700 border-amber-200',
-  funded: 'bg-green-100 text-green-700 border-green-200',
-  active: 'bg-blue-100 text-blue-700 border-blue-200',
-  disputed: 'bg-red-100 text-red-700 border-red-200',
-  released: 'bg-green-100 text-green-700 border-green-200',
+  collecting: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20',
+  funded: 'bg-green-100 text-green-700 border-green-200 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/20',
+  active: 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20',
+  disputed: 'bg-red-100 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20',
+  released: 'bg-green-100 text-green-700 border-green-200 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/20',
   refunded: 'bg-gray-100 text-gray-600 border-gray-200',
   expired: 'bg-gray-100 text-gray-600 border-gray-200',
   cancelled: 'bg-gray-100 text-gray-600 border-gray-200',
@@ -116,14 +116,14 @@ const TYPE_LABEL: Record<EscrowType, string> = {
 const TYPE_BADGE: Record<EscrowType, string> = {
   deal_funding: 'bg-orange/10 text-orange border-orange/20',
   investment_deal: 'bg-gold/10 text-gold border-gold/20',
-  service_payment: 'bg-blue-50 text-blue-600 border-blue-200',
-  milestone: 'bg-purple-50 text-purple-600 border-purple-200',
+  service_payment: 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20',
+  milestone: 'bg-purple-50 text-purple-600 border-purple-200 dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/20',
 };
 
 const DISPUTE_STATUS_BADGE: Record<string, string> = {
-  open: 'bg-amber-100 text-amber-700 border-amber-200',
-  reviewing: 'bg-blue-100 text-blue-700 border-blue-200',
-  resolved: 'bg-green-100 text-green-700 border-green-200',
+  open: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20',
+  reviewing: 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20',
+  resolved: 'bg-green-100 text-green-700 border-green-200 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/20',
   dismissed: 'bg-gray-100 text-gray-600 border-gray-200',
 };
 
@@ -591,7 +591,7 @@ export default function EscrowPage() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                                className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-400 dark:hover:bg-red-500/10"
                                 onClick={() => openDispute(c.escrowId)}
                               >
                                 <MessageSquare className="mr-1.5 h-3.5 w-3.5" />
@@ -599,7 +599,7 @@ export default function EscrowPage() {
                               </Button>
                             )}
                             {c.hasDispute && (
-                              <Badge className="bg-amber-100 text-amber-700 border-amber-200" variant="outline">
+                              <Badge className="bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20" variant="outline">
                                 Disputed
                               </Badge>
                             )}
@@ -657,9 +657,9 @@ export default function EscrowPage() {
                         </div>
                       )}
                       {d.resolution && (
-                        <div className="rounded-lg bg-green-50 border border-green-200 p-3">
-                          <p className="text-xs font-semibold text-green-700 uppercase tracking-wider mb-1">Resolution</p>
-                          <p className="text-sm text-green-800">{d.resolution}</p>
+                        <div className="rounded-lg bg-green-50 border border-green-200 p-3 dark:bg-green-500/10 dark:border-green-500/20">
+                          <p className="text-xs font-semibold text-green-700 uppercase tracking-wider mb-1 dark:text-green-400">Resolution</p>
+                          <p className="text-sm text-green-800 dark:text-green-300">{d.resolution}</p>
                         </div>
                       )}
                     </CardContent>
