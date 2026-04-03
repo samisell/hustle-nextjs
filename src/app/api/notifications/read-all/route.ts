@@ -2,7 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { verifyToken } from '@/lib/auth';
 
+// Support both PUT and POST for mark-all-read (frontend sends POST)
 export async function PUT(req: NextRequest) {
+  return handleMarkAllRead(req);
+}
+
+export async function POST(req: NextRequest) {
+  return handleMarkAllRead(req);
+}
+
+async function handleMarkAllRead(req: NextRequest) {
   try {
     const authHeader = req.headers.get('authorization');
     if (!authHeader?.startsWith('Bearer ')) {

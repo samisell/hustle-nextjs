@@ -9,7 +9,6 @@ function authenticate(req: NextRequest) {
   return verifyToken(token);
 }
 
-// GET /api/investments - List opportunities and user investments
 export async function GET(req: NextRequest) {
   try {
     const payload = authenticate(req);
@@ -29,7 +28,20 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: 'desc' },
     });
 
-    return NextResponse.json({ opportunities, userInvestments });
+    // Format to match frontend expectations: frontend expects "myInvestments"
+    const formattedInvestments = userInvestments.map((inv) => ({
+      id: inv.id,
+      opportunityId: inv.opportunityId,
+      opportunityTitle: inv.opportunity.title,
+      amount: inv.amount,
+      roiPercent: inv.roiPercent,
+      expectedReturn: inv.expectedReturn,
+      status: inv.status,
+      startDate: inv.startDate.toISOString(),
+      endDate: inv.endDate ? inv.endDate.toISOString() : null,
+    }));
+
+    return NextResponse.json({ opportunities, myInvestments: formattedInvestments });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
   }

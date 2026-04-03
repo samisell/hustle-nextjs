@@ -2,12 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { verifyToken } from '@/lib/auth';
 
-const PLANS: Record<string, { price: number; name: string }> = {
-  basic: { price: 9.99, name: 'Basic' },
-  pro: { price: 29.99, name: 'Pro' },
-  premium: { price: 99.99, name: 'Premium' },
-};
-
 function authenticate(req: NextRequest) {
   const authHeader = req.headers.get('authorization');
   if (!authHeader?.startsWith('Bearer ')) return null;
@@ -26,74 +20,36 @@ export async function GET(req: NextRequest) {
       where: { userId: payload.userId },
     });
 
-    return NextResponse.json({ subscription });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
-  }
-}
-
-export async function POST(req: NextRequest) {
-  try {
-    const payload = authenticate(req);
-    if (!payload) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const body = await req.json();
-    const { plan } = body;
-
-    if (!plan || !PLANS[plan]) {
-      return NextResponse.json(
-        { error: `Invalid plan. Choose from: ${Object.keys(PLANS).join(', ')}` },
-        { status: 400 }
-      );
-    }
-
-    const planDetails = PLANS[plan];
-    const startDate = new Date();
-    const endDate = new Date(startDate);
-    endDate.setMonth(endDate.getMonth() + 1);
-
-    // Create mock payment
-    const payment = await db.payment.create({
-      data: {
-        userId: payload.userId,
-        amount: planDetails.price,
-        status: 'completed',
-        paymentMethod: 'mock',
-        description: `${planDetails.name} plan subscription`,
-      },
-    });
-
-    // Create or update subscription
-    const subscription = await db.subscription.upsert({
+    const payments = await db.payment.findMany({
       where: { userId: payload.userId },
-      create: {
-        userId: payload.userId,
-        plan,
-        status: 'active',
-        startDate,
-        endDate,
-      },
-      update: {
-        plan,
-        status: 'active',
-        startDate,
-        endDate,
-      },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
     });
 
-    // Notify user
-    await db.notification.create({
-      data: {
-        userId: payload.userId,
-        title: 'Subscription Activated!',
-        message: `You have successfully subscribed to the ${planDetails.name} plan for $${planDetails.price}/mo.`,
-        type: 'success',
-      },
-    });
+    const formattedPayments = payments.map((p) => ({
+      id: p.id,
+      amount: p.amount,
+      status: p.status,
+      description: p.description || '',
+      createdAt: p.createdAt.toISOString(),
+    }));
 
-    return NextResponse.json({ subscription, payment }, { status: 201 });
+    const formattedSubscription = subscription ? {
+      plan: subscription.plan,
+      status: subscription.status,
+      startDate: subscription.startDate ? subscription.startDate.toISOString() : null,
+      endDate: subscription.endDate ? subscription.endDate.toISOString() : null,
+    } : {
+      plan: 'none',
+      status: 'inactive',
+      startDate: null,
+      endDate: null,
+    };
+
+    return NextResponse.json({
+      subscription: formattedSubscription,
+      payments: formattedPayments,
+    });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
   }

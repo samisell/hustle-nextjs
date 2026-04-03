@@ -3,6 +3,14 @@ import { db } from '@/lib/db';
 import { verifyToken } from '@/lib/auth';
 
 export async function PUT(req: NextRequest) {
+  return handleRoleUpdate(req);
+}
+
+export async function POST(req: NextRequest) {
+  return handleRoleUpdate(req);
+}
+
+async function handleRoleUpdate(req: NextRequest) {
   try {
     const authHeader = req.headers.get('authorization');
     if (!authHeader?.startsWith('Bearer ')) {

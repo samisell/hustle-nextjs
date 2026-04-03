@@ -44,12 +44,23 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: 'desc' },
     });
 
+    // Format to match frontend expectations
+    const formattedReferredUsers = referredUsers.map((u) => ({
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      joinedAt: u.createdAt.toISOString(),
+      status: 'active',
+      earnings: 0,
+    }));
+
     return NextResponse.json({
-      referralCode: user.referralCode,
-      totalReferrals,
-      activeReferrals,
-      totalEarnings: referralEarnings._sum.earnings || 0,
-      referredUsers,
+      stats: {
+        totalReferrals,
+        activeReferrals,
+        totalEarnings: referralEarnings._sum.earnings || 0,
+      },
+      referredUsers: formattedReferredUsers,
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });

@@ -9,34 +9,38 @@ function authenticate(req: NextRequest) {
   return verifyToken(token);
 }
 
-// PUT /api/notifications/[id] - Mark single notification as read
-export async function PUT(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+// Support both PUT (mark read) and DELETE (remove)
+export async function PUT(req: NextRequest) {
   try {
     const payload = authenticate(req);
     if (!payload) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = await params;
-
-    const notification = await db.notification.findUnique({ where: { id } });
-    if (!notification) {
-      return NextResponse.json({ error: 'Notification not found.' }, { status: 404 });
-    }
-
-    if (notification.userId !== payload.userId) {
-      return NextResponse.json({ error: 'Access denied.' }, { status: 403 });
-    }
-
-    const updated = await db.notification.update({
-      where: { id },
+    // Mark as read
+    await db.notification.update({
+      where: { id: req.params.id, userId: payload.userId },
       data: { read: true },
     });
 
-    return NextResponse.json({ notification: updated });
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const payload = authenticate(req);
+    if (!payload) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    await db.notification.delete({
+      where: { id: req.params.id, userId: payload.userId },
+    });
+
+    return NextResponse.json({ success: true });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
   }
