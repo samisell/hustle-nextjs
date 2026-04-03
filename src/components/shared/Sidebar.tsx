@@ -11,14 +11,16 @@ import {
   CreditCard,
   Shield,
   GraduationCap,
-  ChevronLeft,
   X,
   Lock,
+  Settings,
+  User,
+  ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth';
 
-export type Page = 'dashboard' | 'courses' | 'referrals' | 'wallet' | 'investments' | 'notifications' | 'subscription' | 'escrow' | 'admin';
+export type Page = 'dashboard' | 'courses' | 'referrals' | 'wallet' | 'investments' | 'notifications' | 'subscription' | 'escrow' | 'admin' | 'profile' | 'settings';
 
 interface SidebarProps {
   activePage: Page;
@@ -27,15 +29,20 @@ interface SidebarProps {
   onClose: () => void;
 }
 
-const navItems: { icon: React.ElementType; label: string; page: Page }[] = [
+const mainNavItems: { icon: React.ElementType; label: string; page: Page }[] = [
   { icon: LayoutDashboard, label: 'Dashboard', page: 'dashboard' },
   { icon: BookOpen, label: 'Courses', page: 'courses' },
   { icon: Users, label: 'Referrals', page: 'referrals' },
   { icon: Wallet, label: 'Wallet', page: 'wallet' },
   { icon: TrendingUp, label: 'Investments', page: 'investments' },
-  { icon: Bell, label: 'Notifications', page: 'notifications' },
   { icon: CreditCard, label: 'Subscription', page: 'subscription' },
   { icon: Lock, label: 'Escrow', page: 'escrow' },
+  { icon: Bell, label: 'Notifications', page: 'notifications' },
+];
+
+const accountItems: { icon: React.ElementType; label: string; page: Page }[] = [
+  { icon: User, label: 'Profile', page: 'profile' },
+  { icon: Settings, label: 'Settings', page: 'settings' },
 ];
 
 const adminItems: { icon: React.ElementType; label: string; page: Page }[] = [
@@ -48,6 +55,33 @@ export default function Sidebar({ activePage, onNavigate, isOpen, onClose }: Sid
   const handleNavigate = (page: Page) => {
     onNavigate(page);
     onClose();
+  };
+
+  const renderNavButton = (item: { icon: React.ElementType; label: string; page: Page }, index: number) => {
+    const isActive = activePage === item.page;
+    return (
+      <motion.button
+        key={item.page}
+        whileHover={{ x: 4 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={() => handleNavigate(item.page)}
+        className={cn(
+          'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+          isActive
+            ? 'bg-sidebar-accent text-gold'
+            : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+        )}
+      >
+        <item.icon className={cn('h-5 w-5 shrink-0', isActive && 'text-gold')} />
+        <span>{item.label}</span>
+        {isActive && (
+          <motion.div
+            layoutId="sidebar-active"
+            className="ml-auto h-1.5 w-1.5 rounded-full bg-gold"
+          />
+        )}
+      </motion.button>
+    );
   };
 
   return (
@@ -85,33 +119,9 @@ export default function Sidebar({ activePage, onNavigate, isOpen, onClose }: Sid
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto custom-scrollbar px-3 py-4">
+          {/* Main Navigation */}
           <div className="space-y-1">
-            {navItems.map((item) => {
-              const isActive = activePage === item.page;
-              return (
-                <motion.button
-                  key={item.page}
-                  whileHover={{ x: 4 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => handleNavigate(item.page)}
-                  className={cn(
-                    'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
-                    isActive
-                      ? 'bg-sidebar-accent text-gold'
-                      : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
-                  )}
-                >
-                  <item.icon className={cn('h-5 w-5 shrink-0', isActive && 'text-gold')} />
-                  <span>{item.label}</span>
-                  {isActive && (
-                    <motion.div
-                      layoutId="sidebar-active"
-                      className="ml-auto h-1.5 w-1.5 rounded-full bg-gold"
-                    />
-                  )}
-                </motion.button>
-              );
-            })}
+            {mainNavItems.map((item, index) => renderNavButton(item, index))}
           </div>
 
           {/* Admin section */}
@@ -121,40 +131,30 @@ export default function Sidebar({ activePage, onNavigate, isOpen, onClose }: Sid
                 Admin
               </div>
               <div className="space-y-1">
-                {adminItems.map((item) => {
-                  const isActive = activePage === item.page;
-                  return (
-                    <motion.button
-                      key={item.page}
-                      whileHover={{ x: 4 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => handleNavigate(item.page)}
-                      className={cn(
-                        'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
-                        isActive
-                          ? 'bg-sidebar-accent text-gold'
-                          : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
-                      )}
-                    >
-                      <item.icon className={cn('h-5 w-5 shrink-0', isActive && 'text-gold')} />
-                      <span>{item.label}</span>
-                    </motion.button>
-                  );
-                })}
+                {adminItems.map((item) => renderNavButton(item, 0))}
               </div>
             </div>
           )}
         </nav>
 
-        {/* Bottom section */}
-        <div className="border-t border-sidebar-border px-4 py-4">
-          <div className="flex items-center gap-3 rounded-lg bg-sidebar-accent/30 px-3 py-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gold/20 text-gold text-xs font-bold">
-              {user?.name?.charAt(0)?.toUpperCase() || 'U'}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="truncate text-sm font-medium text-sidebar-foreground">{user?.name || 'User'}</p>
-              <p className="truncate text-xs text-sidebar-foreground/50 capitalize">{user?.role || 'Member'}</p>
+        {/* Bottom section - Account */}
+        <div className="border-t border-sidebar-border">
+          {/* Account Navigation */}
+          <div className="px-3 py-3 space-y-1">
+            {accountItems.map((item) => renderNavButton(item, 0))}
+          </div>
+
+          {/* User card */}
+          <div className="px-4 py-3 border-t border-sidebar-border">
+            <div className="flex items-center gap-3 rounded-lg bg-sidebar-accent/30 px-3 py-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gold/20 text-gold text-xs font-bold">
+                {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="truncate text-sm font-medium text-sidebar-foreground">{user?.name || 'User'}</p>
+                <p className="truncate text-xs text-sidebar-foreground/50 capitalize">{user?.role || 'Member'}</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-sidebar-foreground/30" />
             </div>
           </div>
         </div>

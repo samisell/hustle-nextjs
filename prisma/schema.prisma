@@ -15,17 +15,20 @@ model User {
   role         String   @default("user") // "user" | "admin"
   referralCode String   @unique
   referredBy   String?  // referral code of the person who referred this user
+  avatar       String?
+  bio          String?
+  phone        String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   // Relations
-  subscription  Subscription?
-  wallet        Wallet?
-  referrer      User?            @relation("Referrals", fields: [referredBy], references: [referralCode])
-  referrals     User[]           @relation("Referrals")
-  investments   UserInvestment[]
-  enrollments   Enrollment[]
-  notifications Notification[]
+  subscription     Subscription?
+  wallet           Wallet?
+  referrer         User?               @relation("Referrals", fields: [referredBy], references: [referralCode])
+  referrals        User[]              @relation("Referrals")
+  investments      UserInvestment[]
+  enrollments      Enrollment[]
+  notifications    Notification[]
   payments              Payment[]
   withdrawals           Withdrawal[]
   escrowContributions   EscrowContribution[]
@@ -33,6 +36,7 @@ model User {
   escrowDisputesRaised  EscrowDispute[]      @relation("DisputeRaiser")
   escrowDisputesResolved EscrowDispute[]     @relation("DisputeResolver")
   approvedMilestones    EscrowMilestone[]    @relation("MilestoneApprover")
+  userAchievements      UserAchievement[]
 }
 
 model Subscription {
@@ -305,4 +309,33 @@ model EscrowDispute {
   escrow    EscrowTransaction @relation(fields: [escrowId], references: [id], onDelete: Cascade)
   raisedBy  User              @relation("DisputeRaiser", fields: [raisedById], references: [id])
   resolver  User?             @relation("DisputeResolver", fields: [resolvedBy], references: [id])
+}
+
+// ====================
+// ACHIEVEMENT SYSTEM
+// ====================
+
+model Achievement {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  icon        String   @default("trophy") // icon name
+  category    String   @default("general") // "learning" | "referral" | "investment" | "engagement" | "general"
+  requirement String   // e.g. "Complete 5 courses", "Refer 10 users"
+  points      Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  users UserAchievement[]
+}
+
+model UserAchievement {
+  id            String     @id @default(cuid())
+  userId        String
+  achievementId String
+  earnedAt      DateTime   @default(now())
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
 }

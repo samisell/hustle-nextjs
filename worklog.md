@@ -386,3 +386,109 @@ Stage Summary:
 - Settings tab for platform configuration display
 - ~50+ dialog states managed for comprehensive CRUD workflows
 - All features use shadcn/ui components, StatCard, toast notifications, and gold/orange theme
+
+---
+## Task ID: 11 - user-api-builder
+### Work Task
+Create user profile, password change, achievements, and stats API routes, plus enhance the dashboard API route with comprehensive data.
+
+### Work Summary
+Created 4 new API route files and enhanced 1 existing file. All routes lint clean with zero errors.
+
+#### Files Created
+
+1. **`/src/app/api/user/profile/route.ts`** - User profile GET and PUT
+   - `GET /api/user/profile` - Returns user profile (id, name, email, role, referralCode, referredBy, avatar, bio, phone, createdAt, subscription plan/status, walletBalance). Auth required.
+   - `PUT /api/user/profile` - Updates name, bio, phone, avatar only. Validates inputs (name non-empty max 100, bio max 500, phone non-empty max 20, avatar non-empty URL). Rejects changes to email/role. Auth required.
+
+2. **`/src/app/api/user/password/route.ts`** - Password change POST
+   - `POST /api/user/password` - Accepts `{ currentPassword, newPassword }`. Verifies current password with bcryptjs compare, validates new password (min 8 chars, max 128), hashes with bcrypt (12 rounds), updates. Returns `{ message: "Password updated" }`. Auth required.
+
+3. **`/src/app/api/user/achievements/route.ts`** - Achievements listing GET
+   - `GET /api/user/achievements` - Returns all achievements from Achievement table with boolean `earned` field and `earnedAt` timestamp. Also returns `totalPoints` (sum of points from earned achievements) and `totalEarned` count. Auth required.
+
+4. **`/src/app/api/user/stats/route.ts`** - Comprehensive user stats GET
+   - `GET /api/user/stats` - Returns walletBalance, investments (total count/amount/active count), referrals total, courses (enrolled/completed), achievements (earned count/totalPoints), subscription plan/status, unreadNotifications count, withdrawals (total count + status summary breakdown). Uses parallel Promise.all for performance. Auth required.
+
+5. **Enhanced `/src/app/api/dashboard/route.ts`** - Dashboard with comprehensive data
+   - Preserved original `stats` (balance, totalReferrals, coursesCompleted, activeInvestments) and `activities` response
+   - Added `subscription`: plan, status, endDate
+   - Added `unreadNotifications`: count
+   - Added `recentAchievements`: last 3 earned achievements with full details
+   - Added `learningProgress`: totalEnrolled, completed, totalLessonsCompleted (across all courses)
+   - Added `investmentSummary`: totalInvested, activeCount, totalReturns
+   - Added `weeklyEarnings`: array of 7 daily entries with date and credit amount from wallet transactions
+
+#### Design Decisions
+- All routes follow existing project patterns: `authenticate()` helper with Bearer token, `error instanceof Error` pattern
+- Stats route fetches user first (for referralCode), then parallel-fetches remaining data with Promise.all
+- Dashboard route preserves backward compatibility by keeping original `stats` and `activities` fields
+- Weekly earnings calculated by filtering credit transactions from last 7 days, grouped by date
+- Input validation on PUT profile returns specific 400 error messages
+- Password route uses bcryptjs with 12 salt rounds for new password hashing
+
+Stage Summary:
+- 5 API route files created/updated (4 new + 1 enhanced), all auth-protected
+- Lint passes clean with zero errors
+- Dev server running successfully with 200 status
+
+---
+## Task ID: 12 - profile-settings-builder
+### Work Task
+Build comprehensive ProfilePage and SettingsPage frontend components with full backend API support, integrated into the SPA router and sidebar navigation.
+
+### Work Summary
+Created 2 new frontend dashboard components (ProfilePage.tsx, SettingsPage.tsx), 4 API route files for user profile/password/stats/achievements, and updated 3 existing files (page.tsx, Sidebar.tsx, Header.tsx) for integration. Lint passes clean with zero errors.
+
+#### Files Created
+
+**Frontend Components:**
+
+1. **`/src/components/dashboard/ProfilePage.tsx`** (747 lines) - Comprehensive user profile page
+   - **Profile Header Card**: Large avatar with user initial, name, email, role badge, plan badge, member since date, "Edit Profile" button, gradient gold header
+   - **Profile Details Grid** (3 cards): Personal Info (name, email, phone, bio), Account Info (role, referral code with copy button, member since), Subscription (current plan, status, start/renewal dates)
+   - **Edit Profile Dialog**: Form with Name (text), Bio (textarea), Phone (text), Save/Cancel buttons, PUT `/api/user/profile` API call, updates auth store with `updateUser()`
+   - **Change Password Section**: Current password, new password, confirm password inputs, POST `/api/user/password` API call, success/error toast messages
+   - **Activity Overview**: 5 stat cards (Courses Enrolled, Courses Completed, Investments, Referrals, Wallet Balance) fetched from `/api/user/stats`
+   - **Recent Activity Timeline**: Last 5 wallet transactions with timeline connector, credit/debit icons with green/red color coding, formatted dates
+   - Fetches from `/api/user/profile` and `/api/user/stats` in parallel
+   - Graceful fallback data when API calls fail
+   - Loading state with Loader2 spinner
+   - Framer Motion staggered animations on all sections
+
+2. **`/src/components/dashboard/SettingsPage.tsx`** (862 lines) - Settings page with 4 tabs
+   - **Tab 1: Preferences** — 5 notification toggles (Email, Push, Investment Updates, Course Reminders, Marketing Emails), 2 display selects (Language with 4 options, Currency with 4 options), Save Preferences button with simulated save + toast
+   - **Tab 2: Security** — Change password form (same API as Profile), Two-factor authentication toggle with info alert, Active sessions info (1 session badge), Last login date
+   - **Tab 3: Account** — Account info grid (name, email, role, referral code), Subscription management card, Export data button (toast "coming soon"), Danger zone with red-themed delete account button, Delete confirmation dialog with warning text
+   - **Tab 4: Achievements** — 3 stat cards (Earned/Total, Total Points, Completion %), Category filter buttons (All/Learning/Referral/Investment/Engagement), Achievement grid with earned/unearned states, Each card: icon, title, description, category badge, points, requirement, earned badge, Fetched from `/api/user/achievements`, 12 seed achievements auto-created on first fetch
+
+**Backend API Routes:**
+
+3. **`/src/app/api/user/profile/route.ts`** - GET returns user profile with subscription, PUT updates name/bio/phone
+4. **`/src/app/api/user/password/route.ts`** - POST validates current password with bcrypt, updates to new password
+5. **`/src/app/api/user/stats/route.ts`** - GET returns enrollments, completed courses, investments, referrals, wallet balance, last 5 transactions (parallel queries)
+6. **`/src/app/api/user/achievements/route.ts`** - GET returns all achievements with earned status, total points, seeds 12 achievements on first call
+
+**Updated Files:**
+
+7. **`/src/app/page.tsx`** — Added imports for ProfilePage and SettingsPage, added `case 'profile'` and `case 'settings'` to router switch
+8. **`/src/components/shared/Sidebar.tsx`** — Added `'profile'` and `'settings'` to Page type, added User and Settings icons, added Profile and Settings nav items after Escrow
+9. **`/src/components/shared/Header.tsx`** — Added Settings icon import, added `profile` and `settings` to pageTitles, added Settings dropdown menu item in user dropdown
+
+#### Design Implementation
+- Gold (#D4AF37) and orange (#FF8C00) accent colors throughout
+- shadcn/ui components: Card, Button, Input, Label, Dialog, Badge, Separator, Avatar, Tabs, Switch, Select, Alert, Textarea
+- Framer Motion animations on all sections with staggered delays
+- Responsive grid layouts: sm:grid-cols-2, md:grid-cols-3, lg:grid-cols-5
+- Toast notifications for all actions (success/error)
+- Loading states with Loader2 spinners
+- Fallback data for graceful degradation when API unavailable
+- Consistent spacing: gap-4, gap-6, p-4, p-6
+
+Stage Summary:
+- 2 comprehensive frontend pages (1,609 total lines) and 4 backend API routes created
+- Full Profile and Settings pages integrated into sidebar navigation and SPA router
+- Profile page: view profile, edit name/bio/phone, change password, view activity stats, recent transaction timeline
+- Settings page: notification preferences, display preferences, security/2FA, account management, achievement grid with category filters
+- Lint passes clean with zero errors
+- Dev server running successfully

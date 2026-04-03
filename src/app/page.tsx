@@ -19,6 +19,8 @@ import NotificationsPage from '@/components/dashboard/NotificationsPage';
 import SubscriptionPage from '@/components/dashboard/SubscriptionPage';
 import AdminPage from '@/components/dashboard/AdminPage';
 import EscrowPage from '@/components/dashboard/EscrowPage';
+import ProfilePage from '@/components/dashboard/ProfilePage';
+import SettingsPage from '@/components/dashboard/SettingsPage';
 
 type AppView = 'landing' | 'login' | 'register' | 'dashboard';
 
@@ -122,7 +124,7 @@ export default function Home() {
   const renderActivePage = () => {
     switch (activePage) {
       case 'dashboard':
-        return <DashboardOverview />;
+        return <DashboardOverview onNavigate={setActivePage} />;
       case 'courses':
         return <CoursesPage />;
       case 'referrals':
@@ -137,6 +139,10 @@ export default function Home() {
         return <SubscriptionPage />;
       case 'escrow':
         return <EscrowPage />;
+      case 'profile':
+        return <ProfilePage />;
+      case 'settings':
+        return <SettingsPage />;
       case 'admin':
         if (user.role === 'admin') return <AdminPage />;
         return <DashboardOverview />;
@@ -160,6 +166,7 @@ export default function Home() {
         <Header
           onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
           activePage={activePage}
+          onNavigate={setActivePage}
           unreadCount={3}
         />
 
