@@ -286,3 +286,103 @@ Stage Summary:
 - Fallback data provided for development without backend
 - Lint passes clean with zero errors
 - Dev server running successfully on localhost:3000
+
+---
+Task ID: 9
+Agent: admin-api-builder
+Task: Build enhanced admin API routes
+
+Work Log:
+- Read existing admin API routes and supporting files (auth.ts, db.ts, schema.prisma) to understand authentication patterns and database schema
+- Created 8 new API route files and updated 1 existing file:
+
+1. `/src/app/api/admin/stats/route.ts` - GET platform-wide analytics dashboard
+   - Aggregates: totalUsers, activeSubscriptions, totalRevenue, pendingWithdrawals, totalCourses, totalEnrollments, totalInvestments, totalInvested, totalEscrowHeld, openDisputes, recentSignups (7 days)
+   - Monthly revenue chart data from Payment.paidAt using raw SQLite date functions (last 12 months)
+   - User growth chart data from User.createdAt using raw SQLite date functions (last 12 months)
+   - Top 5 courses by enrollment count, top 5 referrers by referral count
+   - Payment method breakdown (groupBy paymentMethod with count and sum)
+   - Subscription distribution by plan (basic/pro/premium counts)
+
+2. `/src/app/api/admin/users/[id]/route.ts` - User detail/update/delete
+   - GET: Returns user profile, wallet balance, subscription info, enrollment/investment/referral/payment/withdrawal counts, last 10 transactions, last 10 payments
+   - PATCH: Updates name and/or role (validates role is user/admin)
+   - DELETE: Soft-disables by setting role to "suspended"; prevents suspending last admin; sends notification
+
+3. `/src/app/api/admin/users/[id]/balance/route.ts` - Wallet balance adjustment
+   - POST: Accepts amount (positive=credit, negative=debit) and reason
+   - Creates wallet if missing, validates sufficient balance for debits
+   - Creates Transaction record (credit/debit), Earning record for credits
+   - Sends Notification to user with new balance
+
+4. `/src/app/api/admin/payments/route.ts` - Paginated payment listing
+   - GET with query filters: status, method, type, page (default 1), limit (default 20, max 100)
+   - Returns paginated payments with user name/email, total count, current page, total pages
+
+5. `/src/app/api/admin/courses/[id]/route.ts` - Course detail/update/delete
+   - GET: Returns course with ordered lessons and enrollments (with user names)
+   - PATCH: Updates title, description, category, difficulty (validates difficulty values)
+   - DELETE: Deletes course with cascading deletion of enrollments, lessons, and progress
+
+6. `/src/app/api/admin/investments/list/route.ts` - Investment opportunities list
+   - GET: Returns all opportunities with investor counts and pool totals
+
+7. `/src/app/api/admin/investments/[id]/route.ts` - Investment detail/update/delete
+   - GET: Returns opportunity with full investors list (name, email, amount, status, dates)
+   - PATCH: Updates title, description, status (active/closed/completed), min/max investment, ROI, duration
+   - DELETE: Deletes opportunity only if no active investors (safety check)
+
+8. `/src/app/api/admin/notifications/broadcast/route.ts` - Broadcast notifications
+   - POST: Sends notification to all users or specific userIds
+   - Uses createMany for efficient bulk notification creation
+
+9. Updated `/src/app/api/admin/route.ts` - Added POST handler
+   - POST returns all admin data (users, withdrawals, courses, investments) plus summary counts
+
+- All routes follow established patterns: Bearer token auth, admin role check (403), proper HTTP status codes, consistent error format
+- Used Next.js 15 async params pattern: params: Promise<{ id: string }>
+- Lint passes clean with zero errors
+
+Stage Summary:
+- 9 admin API endpoints created (8 new files + 1 updated), covering stats, user management, balance adjustments, payments, courses, investments, and broadcast notifications
+- All endpoints are admin-only with proper authentication and authorization
+- Lint clean, dev server running with 200 status
+
+---
+Task ID: 10
+Agent: admin-frontend-builder
+Task: Build comprehensive admin dashboard with 9 tabs
+
+Work Log:
+- Complete rewrite of `/src/components/dashboard/AdminPage.tsx` (replaced ~1400 line file with ~1150 line comprehensive admin dashboard)
+- Added 9 tabs with full functionality:
+
+1. **Overview** (default) - 8 stat cards, monthly revenue Area chart (gold gradient), user growth Bar chart (orange), subscription Pie/donut chart, top 5 courses, top 5 referrers, quick action buttons
+2. **Users** - Search bar, 3 stat cards, user table with view/adjust balance/promote actions, View User Detail dialog (profile, wallet, transactions, courses, investments), Adjust Balance dialog
+3. **Withdrawals** - Filter buttons (all/pending/approved/rejected/completed), 3 stat cards, withdrawal table with approve/reject/complete actions, toast notifications
+4. **Courses** - Add Course button, 3 stat cards, course table with view/edit/delete actions, Course Detail dialog (lessons, enrolled users with progress), Edit Course dialog, Delete confirmation
+5. **Investments** - Add Opportunity button, 4 stat cards, investment table with view/edit actions, View Investors dialog, Create/Edit Investment dialog
+6. **Escrow** - Preserved all existing escrow management: create escrow, process expired, stats, management table, view detail dialog, confirmation dialog, resolve dispute dialog
+7. **Payments** (NEW) - Status/method/type filter selects, 4 stat cards, payments table with colored method/status/type badges, pagination with prev/next
+8. **Notifications** (NEW) - Send Broadcast button, recent broadcasts list with type badges, Send Broadcast dialog with title/message/type/recipient/preview
+9. **Settings** (NEW) - Platform info, subscription plan cards (Basic/Pro/Premium), system status (database/server/payments)
+
+- All API calls use Bearer token auth with fallback data for graceful degradation
+- Uses Recharts: AreaChart, BarChart, PieChart with gold/orange/green color scheme
+- Framer Motion tab content transitions (opacity + y-axis)
+- Consistent status badge colors: active/completed/approved (green), pending/collecting (amber), failed/rejected/expired (red), inactive/cancelled/refunded (gray)
+- Gold-themed primary buttons throughout
+- Responsive design with hidden columns at breakpoints
+- Loading spinners on all data-fetching sections
+- Lint passes clean with zero errors
+- Dev server returns 200
+
+Stage Summary:
+- Complete admin dashboard rewrite with 9 comprehensive tabs
+- Full CRUD operations for users, courses, investments
+- Advanced analytics with interactive charts on Overview tab
+- Escrow management fully preserved from previous implementation
+- New Payments and Notifications tabs for platform-wide visibility
+- Settings tab for platform configuration display
+- ~50+ dialog states managed for comprehensive CRUD workflows
+- All features use shadcn/ui components, StatCard, toast notifications, and gold/orange theme
