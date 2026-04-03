@@ -45,6 +45,7 @@ import { Separator } from '@/components/ui/separator';
 import PageWrapper from '@/components/shared/PageWrapper';
 import EmptyState from '@/components/shared/EmptyState';
 import { useAuthStore } from '@/store/auth';
+import { useCurrencyStore } from '@/store/currency';
 import { toast } from '@/hooks/use-toast';
 
 /* ─────────────── Types ─────────────── */
@@ -198,6 +199,7 @@ const FALLBACK_DISPUTES: EscrowDispute[] = [
 
 export default function EscrowPage() {
   const token = useAuthStore((s) => s.token);
+  const formatAmount = useCurrencyStore((s) => s.formatAmount);
 
   /* Data state */
   const [escrows, setEscrows] = useState<EscrowItem[]>([]);
@@ -264,11 +266,11 @@ export default function EscrowPage() {
       return;
     }
     if (selectedEscrow && amount < selectedEscrow.minContribution) {
-      setContributeError(`Minimum contribution is $${selectedEscrow.minContribution}.`);
+      setContributeError(`Minimum contribution is ${formatAmount(selectedEscrow.minContribution)}.`);
       return;
     }
     if (selectedEscrow && amount > selectedEscrow.maxContribution) {
-      setContributeError(`Maximum contribution is $${selectedEscrow.maxContribution.toLocaleString()}.`);
+      setContributeError(`Maximum contribution is ${formatAmount(selectedEscrow.maxContribution)}.`);
       return;
     }
 
@@ -286,7 +288,7 @@ export default function EscrowPage() {
       });
       if (res.ok) {
         setContributeOpen(false);
-        toast({ title: 'Contribution Successful', description: `You contributed $${amount.toFixed(2)} to ${selectedEscrow?.title}.` });
+        toast({ title: 'Contribution Successful', description: `You contributed ${formatAmount(amount)} to ${selectedEscrow?.title}.` });
         fetchEscrowData();
       } else {
         const data = await res.json();
@@ -429,10 +431,10 @@ export default function EscrowPage() {
                             <div className="space-y-2">
                               <div className="flex items-center justify-between text-sm">
                                 <span className="font-medium text-foreground">
-                                  ${escrow.collectedAmount.toLocaleString()}
+                                  {formatAmount(escrow.collectedAmount)}
                                 </span>
                                 <span className="text-muted-foreground">
-                                  of ${escrow.targetAmount.toLocaleString()}
+                                  of {formatAmount(escrow.targetAmount)}
                                 </span>
                               </div>
                               <div className="relative">
@@ -457,7 +459,7 @@ export default function EscrowPage() {
                               </div>
                               <div className="rounded-lg bg-muted/50 p-2.5 text-center">
                                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Min</p>
-                                <p className="text-xs font-semibold mt-0.5">${escrow.minContribution}</p>
+                                <p className="text-xs font-semibold mt-0.5">{formatAmount(escrow.minContribution)}</p>
                               </div>
                               <div className="rounded-lg bg-muted/50 p-2.5 text-center">
                                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Contributors</p>
@@ -519,8 +521,8 @@ export default function EscrowPage() {
                           <CardContent className="space-y-4">
                             <div className="space-y-2">
                               <div className="flex items-center justify-between text-sm">
-                                <span className="font-medium">${escrow.collectedAmount.toLocaleString()}</span>
-                                <span className="text-muted-foreground">of ${escrow.targetAmount.toLocaleString()}</span>
+                                <span className="font-medium">{formatAmount(escrow.collectedAmount)}</span>
+                                <span className="text-muted-foreground">of {formatAmount(escrow.targetAmount)}</span>
                               </div>
                               <Progress value={(escrow.collectedAmount / escrow.targetAmount) * 100} className="h-2" />
                             </div>
@@ -533,7 +535,7 @@ export default function EscrowPage() {
                               </div>
                               <div className="rounded-lg bg-muted/50 p-2.5 text-center">
                                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Min</p>
-                                <p className="text-xs font-semibold mt-0.5">${escrow.minContribution}</p>
+                                <p className="text-xs font-semibold mt-0.5">{formatAmount(escrow.minContribution)}</p>
                               </div>
                               <div className="rounded-lg bg-muted/50 p-2.5 text-center">
                                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Contributors</p>
@@ -577,7 +579,7 @@ export default function EscrowPage() {
                       {contributions.map((c) => (
                         <TableRow key={c.id}>
                           <TableCell className="font-medium">{c.escrowTitle}</TableCell>
-                          <TableCell className="font-medium">${c.amount.toFixed(2)}</TableCell>
+                          <TableCell className="font-medium">{formatAmount(c.amount)}</TableCell>
                           <TableCell>
                             <Badge className={STATUS_BADGE[c.status as EscrowStatus] || 'bg-muted text-muted-foreground'} variant="outline">
                               {c.status}
@@ -692,7 +694,7 @@ export default function EscrowPage() {
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Funding Progress</span>
                 <span className="font-semibold text-gold">
-                  ${selectedEscrow?.collectedAmount.toLocaleString()} / ${selectedEscrow?.targetAmount.toLocaleString()}
+                  {formatAmount(selectedEscrow?.collectedAmount ?? 0)} / {formatAmount(selectedEscrow?.targetAmount ?? 0)}
                 </span>
               </div>
               <Progress value={selectedEscrow ? (selectedEscrow.collectedAmount / selectedEscrow.targetAmount) * 100 : 0} className="h-2" />
@@ -731,7 +733,7 @@ export default function EscrowPage() {
               <Input
                 id="contributeAmount"
                 type="number"
-                placeholder={`Min $${selectedEscrow?.minContribution} — Max $${selectedEscrow?.maxContribution?.toLocaleString()}`}
+                placeholder={`Min ${formatAmount(selectedEscrow?.minContribution ?? 0)} — Max ${formatAmount(selectedEscrow?.maxContribution ?? 0)}`}
                 min={selectedEscrow?.minContribution}
                 max={selectedEscrow?.maxContribution}
                 step="0.01"
@@ -748,7 +750,7 @@ export default function EscrowPage() {
                     className="flex-1 text-xs"
                     onClick={() => setContributeAmount(String(qa))}
                   >
-                    ${qa}
+                    {formatAmount(qa)}
                   </Button>
                 ))}
               </div>

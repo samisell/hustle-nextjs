@@ -36,6 +36,7 @@ import {
 import PageWrapper from '@/components/shared/PageWrapper';
 import EmptyState from '@/components/shared/EmptyState';
 import { useAuthStore } from '@/store/auth';
+import { useCurrencyStore } from '@/store/currency';
 
 interface InvestmentOpportunity {
   id: string;
@@ -63,6 +64,7 @@ interface UserInvestment {
 
 export default function InvestmentsPage() {
   const token = useAuthStore((s) => s.token);
+  const formatAmount = useCurrencyStore((s) => s.formatAmount);
   const [opportunities, setOpportunities] = useState<InvestmentOpportunity[]>([]);
   const [myInvestments, setMyInvestments] = useState<UserInvestment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -225,11 +227,11 @@ export default function InvestmentsPage() {
                         </div>
                         <div className="rounded-lg bg-muted/50 p-3">
                           <p className="text-xs text-muted-foreground">Min Investment</p>
-                          <p className="text-sm font-semibold">${opp.minInvestment}</p>
+                          <p className="text-sm font-semibold">{formatAmount(opp.minInvestment)}</p>
                         </div>
                         <div className="rounded-lg bg-muted/50 p-3">
                           <p className="text-xs text-muted-foreground">Pool Size</p>
-                          <p className="text-sm font-semibold">${opp.totalPool.toLocaleString()}</p>
+                          <p className="text-sm font-semibold">{formatAmount(opp.totalPool, true, true)}</p>
                         </div>
                       </div>
                       <Button
@@ -272,9 +274,9 @@ export default function InvestmentsPage() {
                     {myInvestments.map((inv) => (
                       <TableRow key={inv.id}>
                         <TableCell className="font-medium">{inv.opportunityTitle}</TableCell>
-                        <TableCell>${inv.amount.toFixed(2)}</TableCell>
+                        <TableCell>{formatAmount(inv.amount)}</TableCell>
                         <TableCell className="text-gold font-medium">{inv.roiPercent}%</TableCell>
-                        <TableCell>${inv.expectedReturn.toFixed(2)}</TableCell>
+                        <TableCell>{formatAmount(inv.expectedReturn)}</TableCell>
                         <TableCell>
                           <Badge className={
                             inv.status === 'active'
@@ -342,7 +344,7 @@ export default function InvestmentsPage() {
                 <p className="text-sm text-muted-foreground">
                   Expected return:{' '}
                   <span className="font-medium text-gold">
-                    ${(parseFloat(investAmount || '0') * (1 + selectedOpportunity.roiPercent / 100)).toFixed(2)}
+                    {formatAmount(parseFloat(investAmount || '0') * (1 + selectedOpportunity.roiPercent / 100))}
                   </span>
                 </p>
               )}

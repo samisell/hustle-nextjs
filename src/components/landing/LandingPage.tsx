@@ -37,6 +37,8 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import ThemeToggle from '@/components/shared/ThemeToggle';
+import CurrencySelector from '@/components/shared/CurrencySelector';
+import { useCurrencyStore } from '@/store/currency';
 
 interface LandingPageProps {
   onLogin: () => void;
@@ -87,7 +89,7 @@ const featuredCourses = [
     rating: 4.9,
     students: 2340,
     instructor: 'Sarah Mitchell',
-    price: '$49.99',
+    price: 49.99,
   },
   {
     title: 'Stock Market Investing 101',
@@ -99,7 +101,7 @@ const featuredCourses = [
     rating: 4.8,
     students: 1856,
     instructor: 'Michael Chen',
-    price: '$69.99',
+    price: 69.99,
   },
   {
     title: 'Crypto & Digital Assets',
@@ -111,7 +113,7 @@ const featuredCourses = [
     rating: 4.7,
     students: 1423,
     instructor: 'David Park',
-    price: '$89.99',
+    price: 89.99,
   },
 ];
 
@@ -211,7 +213,7 @@ const stats = [
 const plans = [
   {
     name: 'Basic',
-    price: '$9.99',
+    price: 9.99,
     period: '/month',
     description: 'Perfect for getting started on your financial journey.',
     features: ['5 Core Courses', 'Basic Investment Access', 'Community Forum', 'Email Support'],
@@ -219,7 +221,7 @@ const plans = [
   },
   {
     name: 'Pro',
-    price: '$29.99',
+    price: 29.99,
     period: '/month',
     description: 'For serious learners ready to accelerate their growth.',
     features: ['All Courses', 'Advanced Investment Opportunities', 'Referral Program (10% commission)', 'Priority Support', 'Monthly Webinars', 'Certificate of Completion'],
@@ -228,7 +230,7 @@ const plans = [
   },
   {
     name: 'Premium',
-    price: '$99.99',
+    price: 99.99,
     period: '/month',
     description: 'The ultimate package for maximum financial growth.',
     features: ['Everything in Pro', '1-on-1 Mentorship', 'VIP Investment Pool', 'Referral Program (20% commission)', 'Exclusive Masterclasses', 'Early Access to New Features', 'Dedicated Account Manager'],
@@ -334,6 +336,7 @@ const scaleIn = {
 
 export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
   const [activeTestimonial, setActiveTestimonial] = useState(0);
+  const formatAmount = useCurrencyStore((s) => s.formatAmount);
 
   return (
     <div className="min-h-screen bg-background">
@@ -349,6 +352,7 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
             </span>
           </div>
           <div className="flex items-center gap-2">
+            <CurrencySelector />
             <ThemeToggle />
             <Button variant="ghost" onClick={onLogin}>Log in</Button>
             <Button onClick={onRegister} className="bg-gold text-white hover:bg-gold-dark">Get Started</Button>
@@ -559,7 +563,7 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
                     <h3 className="mt-1 text-lg font-semibold text-foreground group-hover:text-gold transition-colors">{course.title}</h3>
                     <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{course.description}</p>
                     <div className="mt-4 flex items-center justify-between">
-                      <span className="text-xl font-bold text-foreground">{course.price}</span>
+                      <span className="text-xl font-bold text-foreground">{formatAmount(course.price)}</span>
                       <Button size="sm" variant="outline" className="hover:border-gold/30 hover:text-gold" onClick={onRegister}>Enroll Now</Button>
                     </div>
                   </CardContent>
@@ -850,7 +854,7 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div className="flex items-baseline gap-1">
-                      <span className="text-4xl font-bold text-foreground">{plan.price}</span>
+                      <span className="text-4xl font-bold text-foreground">{formatAmount(plan.price)}</span>
                       <span className="text-muted-foreground">{plan.period}</span>
                     </div>
                     <ul className="space-y-3">

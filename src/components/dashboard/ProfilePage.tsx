@@ -41,6 +41,7 @@ import {
 } from '@/components/ui/dialog';
 import PageWrapper from '@/components/shared/PageWrapper';
 import { useAuthStore } from '@/store/auth';
+import { useCurrencyStore } from '@/store/currency';
 import { toast } from '@/hooks/use-toast';
 
 interface UserProfile {
@@ -77,6 +78,7 @@ interface Transaction {
 
 export default function ProfilePage() {
   const { user, token, updateUser } = useAuthStore();
+  const formatAmount = useCurrencyStore((s) => s.formatAmount);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [stats, setStats] = useState<UserStats>({
     totalEnrolled: 0,
@@ -291,7 +293,7 @@ export default function ProfilePage() {
     { icon: Award, label: 'Courses Completed', value: stats.completedCourses, color: 'bg-green-100 dark:bg-green-500/10 text-green-600 dark:text-green-400' },
     { icon: TrendingUp, label: 'Investments', value: stats.totalInvestments, color: 'bg-purple-100 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400' },
     { icon: Users, label: 'Referrals', value: stats.totalReferrals, color: 'bg-orange-100 text-orange-600' },
-    { icon: Wallet, label: 'Wallet Balance', value: `$${stats.walletBalance.toFixed(2)}`, color: 'bg-gold/10 text-gold' },
+    { icon: Wallet, label: 'Wallet Balance', value: formatAmount(stats.walletBalance), color: 'bg-gold/10 text-gold' },
   ];
 
   return (
@@ -665,7 +667,7 @@ export default function ProfilePage() {
                             tx.type === 'credit' ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'
                           }`}
                         >
-                          {tx.type === 'credit' ? '+' : '-'}${tx.amount.toFixed(2)}
+                          {tx.type === 'credit' ? '+' : '-'}{formatAmount(tx.amount)}
                         </span>
                       </div>
                       <p className="text-xs text-muted-foreground mt-0.5">

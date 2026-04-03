@@ -29,6 +29,7 @@ import StatCard from '@/components/shared/StatCard';
 import PageWrapper from '@/components/shared/PageWrapper';
 import EmptyState from '@/components/shared/EmptyState';
 import { useAuthStore } from '@/store/auth';
+import { useCurrencyStore } from '@/store/currency';
 
 interface ReferralStats {
   totalReferrals: number;
@@ -48,6 +49,7 @@ interface ReferredUser {
 export default function ReferralsPage() {
   const token = useAuthStore((s) => s.token);
   const user = useAuthStore((s) => s.user);
+  const formatAmount = useCurrencyStore((s) => s.formatAmount);
   const [stats, setStats] = useState<ReferralStats>({
     totalReferrals: 0,
     activeReferrals: 0,
@@ -173,7 +175,7 @@ export default function ReferralsPage() {
         />
         <StatCard
           title="Total Earnings"
-          value={`$${stats.totalEarnings.toFixed(2)}`}
+          value={formatAmount(stats.totalEarnings)}
           icon={Gift}
           description="From referrals"
         />
@@ -224,7 +226,7 @@ export default function ReferralsPage() {
                         {new Date(u.joinedAt).toLocaleDateString()}
                       </TableCell>
                       <TableCell className="text-right font-medium text-gold">
-                        ${u.earnings.toFixed(2)}
+                        {formatAmount(u.earnings)}
                       </TableCell>
                     </TableRow>
                   ))}

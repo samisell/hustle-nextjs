@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef, useSyncExternalStore } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAuthStore } from '@/store/auth';
+import { useCurrencyStore, type Currency } from '@/store/currency';
 import type { Page } from '@/components/shared/Sidebar';
 
 import Sidebar from '@/components/shared/Sidebar';
@@ -36,6 +37,7 @@ function useIsMounted() {
 
 export default function Home() {
   const { user, token, login, logout, isLoading } = useAuthStore();
+  const setCurrency = useCurrencyStore((s) => s.setCurrency);
   const mounted = useIsMounted();
   const [view, setView] = useState<AppView>('landing');
   const [activePage, setActivePage] = useState<Page>('dashboard');
@@ -48,6 +50,11 @@ export default function Home() {
   useEffect(() => {
     if (!hydratedRef.current) {
       hydratedRef.current = true;
+      // Restore currency preference
+      const savedCurrency = localStorage.getItem('hu_currency') as Currency | null;
+      if (savedCurrency && ['NGN', 'USD', 'USDT'].includes(savedCurrency)) {
+        setCurrency(savedCurrency);
+      }
       const savedToken = localStorage.getItem('hu_token');
       const savedUser = localStorage.getItem('hu_user');
 

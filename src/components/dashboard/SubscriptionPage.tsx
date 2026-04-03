@@ -45,6 +45,7 @@ import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import PageWrapper from '@/components/shared/PageWrapper';
 import { useAuthStore } from '@/store/auth';
+import { useCurrencyStore } from '@/store/currency';
 
 interface Subscription {
   plan: string;
@@ -130,6 +131,7 @@ type PaymentMethod = 'flutterwave' | 'crypto';
 
 export default function SubscriptionPage() {
   const token = useAuthStore((s) => s.token);
+  const formatAmount = useCurrencyStore((s) => s.formatAmount);
   const [subscription, setSubscription] = useState<Subscription>({
     plan: 'basic',
     status: 'inactive',
@@ -413,7 +415,7 @@ export default function SubscriptionPage() {
                     <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-gold/10"><Icon className="h-5 w-5 text-gold" /></div>
                     <CardTitle className="text-lg">{plan.name}</CardTitle>
                     <div className="flex items-baseline justify-center gap-1">
-                      <span className="text-3xl font-bold text-foreground">${plan.price}</span>
+                      <span className="text-3xl font-bold text-foreground">{formatAmount(plan.price)}</span>
                       <span className="text-muted-foreground">{plan.period}</span>
                     </div>
                   </CardHeader>
@@ -472,7 +474,7 @@ export default function SubscriptionPage() {
                       <TableCell>
                         <Badge className={p.status === 'completed' ? 'bg-green-100 text-green-700 border-green-200 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/20' : p.status === 'failed' ? 'bg-red-100 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20' : 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20'} variant="outline">{p.status}</Badge>
                       </TableCell>
-                      <TableCell className="text-right font-medium">${p.amount.toFixed(2)}</TableCell>
+                      <TableCell className="text-right font-medium">{formatAmount(p.amount)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -497,7 +499,7 @@ export default function SubscriptionPage() {
                   {selectedPlan && (
                     <div className="rounded-lg bg-muted/50 p-4">
                       <h4 className="font-medium capitalize">{selectedPlan} Plan</h4>
-                      <p className="text-2xl font-bold text-gold mt-1">${plans.find(p => p.id === selectedPlan)?.price}<span className="text-sm font-normal text-muted-foreground">/month</span></p>
+                      <p className="text-2xl font-bold text-gold mt-1">{formatAmount(plans.find(p => p.id === selectedPlan)?.price ?? 0)}<span className="text-sm font-normal text-muted-foreground">/month</span></p>
                     </div>
                   )}
                   {/* Payment Method Cards */}
@@ -557,7 +559,7 @@ export default function SubscriptionPage() {
                     <p className="text-2xl font-bold text-foreground mt-1">
                       {cryptoDetails.paymentAmount} <span className="text-sm font-normal text-muted-foreground uppercase">{cryptoDetails.paymentCurrency}</span>
                     </p>
-                    <p className="text-xs text-muted-foreground mt-1">≈ ${cryptoDetails.amount} USD</p>
+                    <p className="text-xs text-muted-foreground mt-1">≈ {formatAmount(parseFloat(cryptoDetails.amount))} USD</p>
                     <div className="flex items-center justify-center gap-1 mt-2 text-xs text-orange-600">
                       <Clock className="h-3 w-3" />
                       <span>Expires in ~{formatExpiry(cryptoDetails.expiresAt)}</span>

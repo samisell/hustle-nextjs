@@ -30,6 +30,7 @@ import { Separator } from '@/components/ui/separator';
 import PageWrapper from '@/components/shared/PageWrapper';
 import StatCard from '@/components/shared/StatCard';
 import { useAuthStore } from '@/store/auth';
+import { useCurrencyStore } from '@/store/currency';
 import { toast } from '@/hooks/use-toast';
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -255,6 +256,7 @@ const TAB_ANIMATION = { initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y
 
 export default function AdminPage() {
   const token = useAuthStore((s) => s.token);
+  const formatAmount = useCurrencyStore((s) => s.formatAmount);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
@@ -486,7 +488,7 @@ export default function AdminPage() {
     setAdjustingBalance(true);
     try {
       const res = await fetch(`/api/admin/users/${balanceTarget.id}/balance`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ amount: parseFloat(balanceAmount), reason: balanceReason }) });
-      if (res.ok) { toast({ title: 'Balance Updated', description: `Adjusted by $${balanceAmount}` }); setBalanceDialogOpen(false); fetchAllData(); }
+      if (res.ok) { toast({ title: 'Balance Updated', description: `Adjusted by ${formatAmount(parseFloat(balanceAmount))}` }); setBalanceDialogOpen(false); fetchAllData(); }
       else { const d = await res.json(); toast({ title: 'Error', description: d.error || 'Failed to adjust balance.' }); }
     } catch { toast({ title: 'Error', description: 'Something went wrong.' }); }
     finally { setAdjustingBalance(false); }
@@ -670,12 +672,12 @@ export default function AdminPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <StatCard title="Total Users" value={s.totalUsers.toLocaleString()} icon={Users} trend={{ value: 12, label: 'vs last month' }} />
               <StatCard title="Active Subscriptions" value={s.activeSubscriptions.toLocaleString()} icon={UserCheck} trend={{ value: 8, label: 'vs last month' }} />
-              <StatCard title="Total Revenue" value={`$${s.totalRevenue.toLocaleString()}`} icon={DollarSign} trend={{ value: 15, label: 'vs last month' }} />
-              <StatCard title="Pending Withdrawals" value={`$${s.pendingWithdrawals.toLocaleString()}`} icon={ArrowLeftRight} />
+              <StatCard title="Total Revenue" value={formatAmount(s.totalRevenue)} icon={DollarSign} trend={{ value: 15, label: 'vs last month' }} />
+              <StatCard title="Pending Withdrawals" value={formatAmount(s.pendingWithdrawals)} icon={ArrowLeftRight} />
               <StatCard title="Total Courses" value={s.totalCourses} icon={BookOpen} />
               <StatCard title="Total Enrollments" value={s.totalEnrollments.toLocaleString()} icon={Activity} />
-              <StatCard title="Total Investments" value={`$${s.totalInvestments.toLocaleString()}`} icon={TrendingUp} />
-              <StatCard title="Escrow Held" value={`$${s.escrowHeld.toLocaleString()}`} icon={Lock} />
+              <StatCard title="Total Investments" value={formatAmount(s.totalInvestments)} icon={TrendingUp} />
+              <StatCard title="Escrow Held" value={formatAmount(s.escrowHeld)} icon={Lock} />
             </div>
 
             {/* Charts Row */}
@@ -689,8 +691,8 @@ export default function AdminPage() {
                       <defs><linearGradient id="goldGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#D4AF37" stopOpacity={0.3} /><stop offset="95%" stopColor="#D4AF37" stopOpacity={0} /></linearGradient></defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                       <XAxis dataKey="month" fontSize={12} tickLine={false} />
-                      <YAxis fontSize={12} tickLine={false} tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`} />
-                      <Tooltip formatter={(v: number) => [`$${v.toLocaleString()}`, 'Revenue']} />
+                      <YAxis fontSize={12} tickLine={false} tickFormatter={(v: number) => formatAmount(v, true, true)} />
+                      <Tooltip formatter={(v: number) => [formatAmount(v), 'Revenue']} />
                       <Area type="monotone" dataKey="revenue" stroke="#D4AF37" fill="url(#goldGrad)" strokeWidth={2} />
                     </AreaChart>
                   </ResponsiveContainer>
@@ -816,7 +818,7 @@ export default function AdminPage() {
                             <TableCell>
                               <Badge className={user.role === 'admin' ? 'bg-gold/10 text-gold border-gold/20' : 'bg-muted text-muted-foreground'} variant="outline">{user.role}</Badge>
                             </TableCell>
-                            <TableCell className="hidden md:table-cell">${user.balance.toFixed(2)}</TableCell>
+                            <TableCell className="hidden md:table-cell">{formatAmount(user.balance)}</TableCell>
                             <TableCell className="hidden lg:table-cell text-muted-foreground">{new Date(user.createdAt).toLocaleDateString()}</TableCell>
                             <TableCell className="text-right">
                               <div className="flex justify-end gap-1">
@@ -848,8 +850,8 @@ export default function AdminPage() {
             </div>
             <div className="grid grid-cols-3 gap-4">
               <StatCard title="Total Withdrawals" value={withdrawals.length} icon={ArrowLeftRight} />
-              <StatCard title="Pending Amount" value={`$${withdrawals.filter((w) => w.status === 'pending').reduce((s, w) => s + w.amount, 0).toFixed(2)}`} icon={Clock} />
-              <StatCard title="Total Paid" value={`$${withdrawals.filter((w) => w.status === 'completed' || w.status === 'approved').reduce((s, w) => s + w.amount, 0).toFixed(2)}`} icon={DollarSign} />
+              <StatCard title="Pending Amount" value={formatAmount(withdrawals.filter((w) => w.status === 'pending').reduce((s, w) => s + w.amount, 0))} icon={Clock} />
+              <StatCard title="Total Paid" value={formatAmount(withdrawals.filter((w) => w.status === 'completed' || w.status === 'approved').reduce((s, w) => s + w.amount, 0))} icon={DollarSign} />
             </div>
             <Card>
               <CardContent className="p-0">
@@ -861,7 +863,7 @@ export default function AdminPage() {
                         {filteredWithdrawals.map((w) => (
                           <TableRow key={w.id}>
                             <TableCell><div><p className="font-medium">{w.userName}</p><p className="text-xs text-muted-foreground">{w.userEmail}</p></div></TableCell>
-                            <TableCell className="font-medium">${w.amount.toFixed(2)}</TableCell>
+                            <TableCell className="font-medium">{formatAmount(w.amount)}</TableCell>
                             <TableCell className="hidden sm:table-cell text-muted-foreground text-xs font-mono">{w.walletAddress}</TableCell>
                             <TableCell>
                               <Badge className={w.status === 'pending' ? 'bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/20' : w.status === 'approved' || w.status === 'completed' ? 'bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-400 border-green-200 dark:border-green-500/20' : 'bg-red-100 dark:bg-red-500/10 text-red-700 dark:text-red-400 border-red-200 dark:border-red-500/20'} variant="outline">{w.status}</Badge>
@@ -939,7 +941,7 @@ export default function AdminPage() {
               <div className="grid grid-cols-4 gap-4">
                 <StatCard title="Opportunities" value={investments.length} icon={TrendingUp} />
                 <StatCard title="Active" value={investments.filter((inv) => inv.status === 'active').length} icon={Activity} />
-                <StatCard title="Total Pool" value={`$${investments.reduce((s, inv) => s + inv.totalPool, 0).toLocaleString()}`} icon={DollarSign} />
+                <StatCard title="Total Pool" value={formatAmount(investments.reduce((s, inv) => s + inv.totalPool, 0))} icon={DollarSign} />
                 <StatCard title="Investors" value={investments.reduce((s, inv) => s + (inv.investorCount || 0), 0)} icon={Users} />
               </div>
               <Button className="bg-gold text-white hover:bg-gold-dark" onClick={() => { resetInvestmentForm(); setInvestDialogOpen(true); }}><Plus className="mr-2 h-4 w-4" />Add Opportunity</Button>
@@ -952,10 +954,10 @@ export default function AdminPage() {
                     <TableBody>
                       {investments.map((inv) => (
                         <TableRow key={inv.id}>
-                          <TableCell><div><p className="font-medium">{inv.title}</p><p className="text-xs text-muted-foreground">${inv.minInvestment}-${inv.maxInvestment}</p></div></TableCell>
+                          <TableCell><div><p className="font-medium">{inv.title}</p><p className="text-xs text-muted-foreground">{formatAmount(inv.minInvestment)}-{formatAmount(inv.maxInvestment)}</p></div></TableCell>
                           <TableCell className="hidden sm:table-cell text-gold font-semibold">{inv.roiPercent}%</TableCell>
                           <TableCell className="hidden md:table-cell">{inv.duration}</TableCell>
-                          <TableCell className="hidden md:table-cell">${inv.totalPool.toLocaleString()}</TableCell>
+                          <TableCell className="hidden md:table-cell">{formatAmount(inv.totalPool)}</TableCell>
                           <TableCell className="hidden lg:table-cell">{inv.investorCount || 0}</TableCell>
                           <TableCell><Badge className={inv.status === 'active' ? 'bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-400 border-green-200 dark:border-green-500/20' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700'} variant="outline">{inv.status}</Badge></TableCell>
                           <TableCell className="text-right">
@@ -984,7 +986,7 @@ export default function AdminPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
               <StatCard title="Total Escrows" value={escrowStats.total} icon={Lock} />
               <StatCard title="Active Escrows" value={escrowStats.active} icon={Shield} />
-              <StatCard title="Held in Escrow" value={`$${escrowStats.held.toLocaleString()}`} icon={DollarSign} />
+              <StatCard title="Held in Escrow" value={formatAmount(escrowStats.held)} icon={DollarSign} />
               <StatCard title="Open Disputes" value={escrowStats.disputes} icon={Gavel} />
             </div>
             <Card>
@@ -1004,7 +1006,7 @@ export default function AdminPage() {
                               <TableCell className="hidden sm:table-cell"><Badge variant="outline" className="bg-orange/10 text-orange border-orange/20">{ESCROW_TYPE_LABEL[escrow.type]}</Badge></TableCell>
                               <TableCell><Badge className={ESCROW_STATUS_BADGE[escrow.status]} variant="outline">{escrow.status}</Badge></TableCell>
                               <TableCell className="hidden md:table-cell"><div className="flex items-center gap-2 min-w-[120px]"><Progress value={progress} className="h-2 flex-1" /><span className="text-xs text-muted-foreground w-10 text-right">{progress.toFixed(0)}%</span></div></TableCell>
-                              <TableCell className="hidden lg:table-cell text-sm"><span className="font-medium">${escrow.collectedAmount.toLocaleString()}</span><span className="text-muted-foreground"> / ${escrow.targetAmount.toLocaleString()}</span></TableCell>
+                              <TableCell className="hidden lg:table-cell text-sm"><span className="font-medium">{formatAmount(escrow.collectedAmount)}</span><span className="text-muted-foreground"> / {formatAmount(escrow.targetAmount)}</span></TableCell>
                               <TableCell className="hidden lg:table-cell">{escrow.contributorCount}</TableCell>
                               <TableCell className="text-right">
                                 <div className="flex justify-end gap-1">
@@ -1065,9 +1067,9 @@ export default function AdminPage() {
             {/* Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <StatCard title="Total Payments" value={paymentStats.total} icon={CreditCard} />
-              <StatCard title="Completed Revenue" value={`$${paymentStats.completedRevenue.toFixed(2)}`} icon={DollarSign} />
-              <StatCard title="Pending Amount" value={`$${paymentStats.pendingAmount.toFixed(2)}`} icon={Clock} />
-              <StatCard title="Failed Amount" value={`$${paymentStats.failedAmount.toFixed(2)}`} icon={AlertTriangle} />
+              <StatCard title="Completed Revenue" value={formatAmount(paymentStats.completedRevenue)} icon={DollarSign} />
+              <StatCard title="Pending Amount" value={formatAmount(paymentStats.pendingAmount)} icon={Clock} />
+              <StatCard title="Failed Amount" value={formatAmount(paymentStats.failedAmount)} icon={AlertTriangle} />
             </div>
 
             <Card>
@@ -1079,7 +1081,7 @@ export default function AdminPage() {
                       {filteredPayments.map((p) => (
                         <TableRow key={p.id}>
                           <TableCell className="font-medium">{p.userName}</TableCell>
-                          <TableCell className="font-medium">${p.amount.toFixed(2)}</TableCell>
+                          <TableCell className="font-medium">{formatAmount(p.amount)}</TableCell>
                           <TableCell><Badge className={p.method === 'flutterwave' ? 'bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-400 border-green-200 dark:border-green-500/20' : p.method === 'crypto' ? 'bg-orange/10 text-orange border-orange/20' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700'} variant="outline">{p.method}</Badge></TableCell>
                           <TableCell className="hidden sm:table-cell"><Badge variant="secondary">{p.type}</Badge></TableCell>
                           <TableCell><Badge className={p.status === 'completed' ? 'bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-400 border-green-200 dark:border-green-500/20' : p.status === 'pending' ? 'bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/20' : 'bg-red-100 dark:bg-red-500/10 text-red-700 dark:text-red-400 border-red-200 dark:border-red-500/20'} variant="outline">{p.status}</Badge></TableCell>
@@ -1167,9 +1169,9 @@ export default function AdminPage() {
               <CardContent>
                 <div className="grid md:grid-cols-3 gap-4">
                   {[
-                    { name: 'Basic', price: '$9.99', features: 'Basic courses, Community access', active: true },
-                    { name: 'Pro', price: '$29.99', features: 'All courses, Priority support, Investment access', active: true },
-                    { name: 'Premium', price: '$99.99', features: 'Everything in Pro, 1-on-1 mentoring, Escrow access', active: true },
+                    { name: 'Basic', price: formatAmount(9.99), features: 'Basic courses, Community access', active: true },
+                    { name: 'Pro', price: formatAmount(29.99), features: 'All courses, Priority support, Investment access', active: true },
+                    { name: 'Premium', price: formatAmount(99.99), features: 'Everything in Pro, 1-on-1 mentoring, Escrow access', active: true },
                   ].map((plan) => (
                     <div key={plan.name} className="rounded-xl border p-4 space-y-3">
                       <div className="flex items-center justify-between">
@@ -1228,10 +1230,10 @@ export default function AdminPage() {
                   <div className="rounded-lg bg-muted/50 p-3"><p className="text-[10px] text-muted-foreground uppercase">Name</p><p className="text-sm font-semibold">{userDetail.name}</p></div>
                   <div className="rounded-lg bg-muted/50 p-3"><p className="text-[10px] text-muted-foreground uppercase">Email</p><p className="text-sm font-semibold">{userDetail.email}</p></div>
                   <div className="rounded-lg bg-muted/50 p-3"><p className="text-[10px] text-muted-foreground uppercase">Role</p><p className="text-sm font-semibold">{userDetail.role}</p></div>
-                  <div className="rounded-lg bg-muted/50 p-3"><p className="text-[10px] text-muted-foreground uppercase">Balance</p><p className="text-sm font-semibold text-gold">${userDetail.balance.toFixed(2)}</p></div>
+                  <div className="rounded-lg bg-muted/50 p-3"><p className="text-[10px] text-muted-foreground uppercase">Balance</p><p className="text-sm font-semibold text-gold">{formatAmount(userDetail.balance)}</p></div>
                 </div>
                 {userDetail.transactions && userDetail.transactions.length > 0 && (
-                  <><Separator /><div><h4 className="text-sm font-semibold mb-3">Recent Transactions</h4><div className="rounded-lg border"><Table><TableHeader><TableRow><TableHead>Description</TableHead><TableHead>Amount</TableHead><TableHead>Status</TableHead></TableRow></TableHeader><TableBody>{userDetail.transactions.slice(0, 10).map((t) => <TableRow key={t.id}><TableCell className="text-sm">{t.description}</TableCell><TableCell className="text-sm font-medium">${t.amount.toFixed(2)}</TableCell><TableCell><Badge className={t.status === 'completed' ? 'bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-400 border-green-200 dark:border-green-500/20' : 'bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/20'} variant="outline">{t.status}</Badge></TableCell></TableRow>)}</TableBody></Table></div></div></>
+                  <><Separator /><div><h4 className="text-sm font-semibold mb-3">Recent Transactions</h4><div className="rounded-lg border"><Table><TableHeader><TableRow><TableHead>Description</TableHead><TableHead>Amount</TableHead><TableHead>Status</TableHead></TableRow></TableHeader><TableBody>{userDetail.transactions.slice(0, 10).map((t) => <TableRow key={t.id}><TableCell className="text-sm">{t.description}</TableCell><TableCell className="text-sm font-medium">{formatAmount(t.amount)}</TableCell><TableCell><Badge className={t.status === 'completed' ? 'bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-400 border-green-200 dark:border-green-500/20' : 'bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/20'} variant="outline">{t.status}</Badge></TableCell></TableRow>)}</TableBody></Table></div></div></>
                 )}
                 {userDetail.coursesEnrolled && userDetail.coursesEnrolled.length > 0 && (
                   <><Separator /><div><h4 className="text-sm font-semibold mb-3">Enrolled Courses</h4><div className="space-y-2">{userDetail.coursesEnrolled.map((c, i) => <div key={i} className="flex items-center justify-between rounded-lg border p-3"><span className="text-sm">{c.title}</span><div className="flex items-center gap-2"><Progress value={c.progress} className="h-2 w-20" /><span className="text-xs text-muted-foreground">{c.progress}%</span></div></div>)}</div></div></>
@@ -1345,11 +1347,11 @@ export default function AdminPage() {
                 <div className="grid grid-cols-4 gap-3">
                   <div className="rounded-lg bg-muted/50 p-3"><p className="text-[10px] text-muted-foreground uppercase">ROI</p><p className="text-sm font-semibold text-gold">{investDetail.roiPercent}%</p></div>
                   <div className="rounded-lg bg-muted/50 p-3"><p className="text-[10px] text-muted-foreground uppercase">Duration</p><p className="text-sm font-semibold">{investDetail.duration}</p></div>
-                  <div className="rounded-lg bg-muted/50 p-3"><p className="text-[10px] text-muted-foreground uppercase">Pool Size</p><p className="text-sm font-semibold">${investDetail.totalPool.toLocaleString()}</p></div>
+                  <div className="rounded-lg bg-muted/50 p-3"><p className="text-[10px] text-muted-foreground uppercase">Pool Size</p><p className="text-sm font-semibold">{formatAmount(investDetail.totalPool)}</p></div>
                   <div className="rounded-lg bg-muted/50 p-3"><p className="text-[10px] text-muted-foreground uppercase">Status</p><p className="text-sm font-semibold">{investDetail.status}</p></div>
                 </div>
                 {investDetail.investors && investDetail.investors.length > 0 ? (
-                  <><Separator /><div className="rounded-lg border"><Table><TableHeader><TableRow><TableHead>Investor</TableHead><TableHead>Amount</TableHead><TableHead>Expected Return</TableHead><TableHead>Status</TableHead><TableHead className="hidden sm:table-cell">Start</TableHead><TableHead className="hidden sm:table-cell">End</TableHead></TableRow></TableHeader><TableBody>{investDetail.investors.map((inv, i) => <TableRow key={i}><TableCell className="font-medium">{inv.name}</TableCell><TableCell>${inv.amount.toFixed(2)}</TableCell><TableCell className="text-gold font-medium">${inv.expectedReturn.toFixed(2)}</TableCell><TableCell><Badge className="bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-400 border-green-200 dark:border-green-500/20" variant="outline">{inv.status}</Badge></TableCell><TableCell className="hidden sm:table-cell text-muted-foreground">{new Date(inv.startDate).toLocaleDateString()}</TableCell><TableCell className="hidden sm:table-cell text-muted-foreground">{inv.endDate ? new Date(inv.endDate).toLocaleDateString() : '-'}</TableCell></TableRow>)}</TableBody></Table></div></>
+                  <><Separator /><div className="rounded-lg border"><Table><TableHeader><TableRow><TableHead>Investor</TableHead><TableHead>Amount</TableHead><TableHead>Expected Return</TableHead><TableHead>Status</TableHead><TableHead className="hidden sm:table-cell">Start</TableHead><TableHead className="hidden sm:table-cell">End</TableHead></TableRow></TableHeader><TableBody>{investDetail.investors.map((inv, i) => <TableRow key={i}><TableCell className="font-medium">{inv.name}</TableCell><TableCell>{formatAmount(inv.amount)}</TableCell><TableCell className="text-gold font-medium">{formatAmount(inv.expectedReturn)}</TableCell><TableCell><Badge className="bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-400 border-green-200 dark:border-green-500/20" variant="outline">{inv.status}</Badge></TableCell><TableCell className="hidden sm:table-cell text-muted-foreground">{new Date(inv.startDate).toLocaleDateString()}</TableCell><TableCell className="hidden sm:table-cell text-muted-foreground">{inv.endDate ? new Date(inv.endDate).toLocaleDateString() : '-'}</TableCell></TableRow>)}</TableBody></Table></div></>
                 ) : <p className="py-4 text-center text-sm text-muted-foreground">No investors yet.</p>}
               </div>
             </ScrollArea>
@@ -1445,7 +1447,7 @@ export default function AdminPage() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <div className="rounded-lg bg-muted/50 p-3"><p className="text-[10px] text-muted-foreground uppercase tracking-wider">Type</p><p className="text-sm font-semibold">{ESCROW_TYPE_LABEL[viewEscrow.type]}</p></div>
                   <div className="rounded-lg bg-muted/50 p-3"><p className="text-[10px] text-muted-foreground uppercase tracking-wider">Progress</p><p className="text-sm font-semibold text-gold">{viewEscrow.targetAmount > 0 ? ((viewEscrow.collectedAmount / viewEscrow.targetAmount) * 100).toFixed(1) : 0}%</p></div>
-                  <div className="rounded-lg bg-muted/50 p-3"><p className="text-[10px] text-muted-foreground uppercase tracking-wider">Collected</p><p className="text-sm font-semibold">${viewEscrow.collectedAmount.toLocaleString()}</p></div>
+                  <div className="rounded-lg bg-muted/50 p-3"><p className="text-[10px] text-muted-foreground uppercase tracking-wider">Collected</p><p className="text-sm font-semibold">{formatAmount(viewEscrow.collectedAmount)}</p></div>
                   <div className="rounded-lg bg-muted/50 p-3"><p className="text-[10px] text-muted-foreground uppercase tracking-wider">Contributors</p><p className="text-sm font-semibold">{viewEscrow.contributorCount}</p></div>
                 </div>
                 {viewEscrow.terms && <><p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Terms</p><p className="text-sm">{viewEscrow.terms}</p></>}
@@ -1453,7 +1455,7 @@ export default function AdminPage() {
                 <div>
                   <h4 className="text-sm font-semibold mb-3 flex items-center gap-2"><DollarSign className="h-4 w-4 text-gold" />Contributions ({viewEscrow.contributions.length})</h4>
                   {viewEscrow.contributions.length > 0 ? (
-                    <div className="rounded-lg border"><Table><TableHeader><TableRow><TableHead>User</TableHead><TableHead>Amount</TableHead><TableHead>Status</TableHead><TableHead className="hidden sm:table-cell">Date</TableHead></TableRow></TableHeader><TableBody>{viewEscrow.contributions.map((c) => <TableRow key={c.id}><TableCell className="font-medium">{c.userName}</TableCell><TableCell>${c.amount.toFixed(2)}</TableCell><TableCell><Badge className={ESCROW_STATUS_BADGE[c.status as EscrowStatus] || 'bg-muted text-muted-foreground'} variant="outline">{c.status}</Badge></TableCell><TableCell className="hidden sm:table-cell text-muted-foreground">{new Date(c.date).toLocaleDateString()}</TableCell></TableRow>)}</TableBody></Table></div>
+                    <div className="rounded-lg border"><Table><TableHeader><TableRow><TableHead>User</TableHead><TableHead>Amount</TableHead><TableHead>Status</TableHead><TableHead className="hidden sm:table-cell">Date</TableHead></TableRow></TableHeader><TableBody>{viewEscrow.contributions.map((c) => <TableRow key={c.id}><TableCell className="font-medium">{c.userName}</TableCell><TableCell>{formatAmount(c.amount)}</TableCell><TableCell><Badge className={ESCROW_STATUS_BADGE[c.status as EscrowStatus] || 'bg-muted text-muted-foreground'} variant="outline">{c.status}</Badge></TableCell><TableCell className="hidden sm:table-cell text-muted-foreground">{new Date(c.date).toLocaleDateString()}</TableCell></TableRow>)}</TableBody></Table></div>
                   ) : <p className="text-sm text-muted-foreground">No contributions yet.</p>}
                 </div>
                 {viewEscrow.milestones.length > 0 && (

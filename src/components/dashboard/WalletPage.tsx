@@ -50,6 +50,7 @@ import { Separator } from '@/components/ui/separator';
 import PageWrapper from '@/components/shared/PageWrapper';
 import EmptyState from '@/components/shared/EmptyState';
 import { useAuthStore } from '@/store/auth';
+import { useCurrencyStore } from '@/store/currency';
 
 interface Transaction {
   id: string;
@@ -79,6 +80,7 @@ type PaymentMethod = 'flutterwave' | 'crypto';
 
 export default function WalletPage() {
   const token = useAuthStore((s) => s.token);
+  const formatAmount = useCurrencyStore((s) => s.formatAmount);
   const [balance, setBalance] = useState(0);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -272,7 +274,6 @@ export default function WalletPage() {
   };
 
   const formatExpiry = (timestamp: number) => { const mins = Math.max(0, Math.floor((timestamp * 1000 - Date.now()) / 60000)); return `${mins}m`; };
-  const formatCurrency = (amount: number) => `$${amount.toFixed(2)}`;
 
   return (
     <PageWrapper title="Wallet" description="Manage your funds, view transactions, and withdraw earnings.">
@@ -301,7 +302,7 @@ export default function WalletPage() {
             <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Available Balance</p>
-                <p className="mt-1 text-4xl font-bold text-foreground tracking-tight">{formatCurrency(balance)}</p>
+                <p className="mt-1 text-4xl font-bold text-foreground tracking-tight">{formatAmount(balance)}</p>
                 <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1"><Shield className="h-3 w-3 text-green-500" />Card/Bank</span>
                   <span className="text-muted-foreground/30">|</span>
@@ -323,8 +324,8 @@ export default function WalletPage() {
 
       {/* Quick Stats */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <Card><CardContent className="p-4"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 dark:bg-green-500/10"><ArrowDownRight className="h-5 w-5 text-green-600 dark:text-green-400" /></div><div><p className="text-xs text-muted-foreground">Total Income</p><p className="text-lg font-semibold text-foreground">{formatCurrency(transactions.filter((t) => t.type === 'credit').reduce((sum, t) => sum + t.amount, 0))}</p></div></div></CardContent></Card>
-        <Card><CardContent className="p-4"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-100 dark:bg-red-500/10"><ArrowUpRight className="h-5 w-5 text-red-500 dark:text-red-400" /></div><div><p className="text-xs text-muted-foreground">Total Spent</p><p className="text-lg font-semibold text-foreground">{formatCurrency(transactions.filter((t) => t.type === 'debit').reduce((sum, t) => sum + t.amount, 0))}</p></div></div></CardContent></Card>
+        <Card><CardContent className="p-4"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 dark:bg-green-500/10"><ArrowDownRight className="h-5 w-5 text-green-600 dark:text-green-400" /></div><div><p className="text-xs text-muted-foreground">Total Income</p><p className="text-lg font-semibold text-foreground">{formatAmount(transactions.filter((t) => t.type === 'credit').reduce((sum, t) => sum + t.amount, 0))}</p></div></div></CardContent></Card>
+        <Card><CardContent className="p-4"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-100 dark:bg-red-500/10"><ArrowUpRight className="h-5 w-5 text-red-500 dark:text-red-400" /></div><div><p className="text-xs text-muted-foreground">Total Spent</p><p className="text-lg font-semibold text-foreground">{formatAmount(transactions.filter((t) => t.type === 'debit').reduce((sum, t) => sum + t.amount, 0))}</p></div></div></CardContent></Card>
         <Card><CardContent className="p-4"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gold/10"><DollarSign className="h-5 w-5 text-gold" /></div><div><p className="text-xs text-muted-foreground">Transactions</p><p className="text-lg font-semibold text-foreground">{transactions.length}</p></div></div></CardContent></Card>
       </div>
 
@@ -341,7 +342,7 @@ export default function WalletPage() {
                     <TableRow key={tx.id}>
                       <TableCell><div className="flex items-center gap-2"><div className={`flex h-7 w-7 items-center justify-center rounded-full shrink-0 ${tx.type === 'credit' ? 'bg-green-100 dark:bg-green-500/10' : 'bg-red-100 dark:bg-red-500/10'}`}>{tx.type === 'credit' ? <ArrowDownRight className="h-3.5 w-3.5 text-green-600 dark:text-green-400" /> : <ArrowUpRight className="h-3.5 w-3.5 text-red-500 dark:text-red-400" />}</div><span className="text-sm font-medium">{tx.description}</span></div></TableCell>
                       <TableCell className="text-muted-foreground text-sm">{new Date(tx.createdAt).toLocaleDateString()}</TableCell>
-                      <TableCell className={`text-right font-medium ${tx.type === 'credit' ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>{tx.type === 'credit' ? '+' : '-'}{formatCurrency(tx.amount)}</TableCell>
+                      <TableCell className={`text-right font-medium ${tx.type === 'credit' ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>{tx.type === 'credit' ? '+' : '-'}{formatAmount(tx.amount)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -365,7 +366,7 @@ export default function WalletPage() {
                 <div className="space-y-3">
                   <div className="space-y-2">
                     <Label>Current Balance</Label>
-                    <p className="text-2xl font-bold text-gold">{formatCurrency(balance)}</p>
+                    <p className="text-2xl font-bold text-gold">{formatAmount(balance)}</p>
                   </div>
                   <div className="space-y-2">
                     <button type="button" onClick={() => setSelectedMethod('flutterwave')} className={`w-full flex items-center gap-3 rounded-lg border p-3 text-left transition-colors ${selectedMethod === 'flutterwave' ? 'border-gold bg-gold/5 ring-1 ring-gold/20' : 'border-muted hover:bg-muted/50'}`}>
@@ -412,7 +413,7 @@ export default function WalletPage() {
                 <DialogFooter className="gap-2 sm:gap-0">
                   <Button variant="outline" onClick={() => setFundStep('method')}><ArrowLeft className="mr-2 h-4 w-4" />Back</Button>
                   <Button className="bg-gold text-white hover:bg-gold-dark" onClick={handleProceedFund} disabled={funding}>
-                    {funding ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Initializing...</> : <><CreditCard className="mr-2 h-4 w-4" />Fund {fundAmount ? formatCurrency(parseFloat(fundAmount) || 0) : ''}</>}
+                    {funding ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Initializing...</> : <><CreditCard className="mr-2 h-4 w-4" />Fund {fundAmount ? formatAmount(parseFloat(fundAmount) || 0) : ''}</>}
                   </Button>
                 </DialogFooter>
               </motion.div>
@@ -472,7 +473,7 @@ export default function WalletPage() {
         <DialogContent>
           <DialogHeader><DialogTitle>Withdraw Funds</DialogTitle><DialogDescription>Enter the amount and your wallet address to withdraw funds.</DialogDescription></DialogHeader>
           <div className="space-y-4">
-            <div className="space-y-2"><Label>Available Balance</Label><p className="text-2xl font-bold text-gold">{formatCurrency(balance)}</p></div>
+            <div className="space-y-2"><Label>Available Balance</Label><p className="text-2xl font-bold text-gold">{formatAmount(balance)}</p></div>
             <div className="space-y-2"><Label htmlFor="withdrawAmount">Amount (USD)</Label><Input id="withdrawAmount" type="number" placeholder="0.00" min="0" step="0.01" value={withdrawAmount} onChange={(e) => setWithdrawAmount(e.target.value)} /></div>
             <div className="space-y-2"><Label htmlFor="walletAddress">Wallet Address</Label><Input id="walletAddress" type="text" placeholder="Enter your wallet address" value={withdrawAddress} onChange={(e) => setWithdrawAddress(e.target.value)} /></div>
           </div>

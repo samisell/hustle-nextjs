@@ -38,6 +38,7 @@ import {
 import StatCard from '@/components/shared/StatCard';
 import PageWrapper from '@/components/shared/PageWrapper';
 import { useAuthStore } from '@/store/auth';
+import { useCurrencyStore } from '@/store/currency';
 
 interface DashboardStats {
   balance: number;
@@ -84,6 +85,7 @@ interface EnhancedDashboardData {
 
 export default function DashboardOverview({ onNavigate }: { onNavigate?: (page: 'courses' | 'referrals' | 'wallet' | 'investments' | 'notifications' | 'subscription' | 'escrow' | 'profile' | 'settings' | 'admin' | 'dashboard') => void }) {
   const token = useAuthStore((s) => s.token);
+  const formatAmount = useCurrencyStore((s) => s.formatAmount);
   const [data, setData] = useState<EnhancedDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -205,7 +207,7 @@ export default function DashboardOverview({ onNavigate }: { onNavigate?: (page: 
               </div>
               <div className="text-right">
                 <p className="text-sm font-medium text-muted-foreground">Total Balance</p>
-                <p className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">${stats.balance.toFixed(2)}</p>
+                <p className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">{formatAmount(stats.balance)}</p>
                 <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1 justify-end">
                   <span className="flex items-center gap-1 text-green-600 dark:text-green-400"><TrendingUp className="h-3 w-3" />+$0 today</span>
                 </div>
@@ -219,7 +221,7 @@ export default function DashboardOverview({ onNavigate }: { onNavigate?: (page: 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Total Balance"
-          value={`$${stats.balance.toFixed(2)}`}
+          value={formatAmount(stats.balance)}
           icon={Wallet}
           trend={{ value: 12.5, label: 'vs last week' }}
         />
@@ -239,7 +241,7 @@ export default function DashboardOverview({ onNavigate }: { onNavigate?: (page: 
           title="Active Investments"
           value={stats.activeInvestments}
           icon={TrendingUp}
-          description={`$${investmentSummary.totalInvested.toFixed(2)} invested`}
+          description={`${formatAmount(investmentSummary.totalInvested)} invested`}
         />
       </div>
 
@@ -276,7 +278,7 @@ export default function DashboardOverview({ onNavigate }: { onNavigate?: (page: 
                     fontSize={12}
                     tickLine={false}
                     axisLine={false}
-                    tickFormatter={(value) => `$${value}`}
+                    tickFormatter={(value) => formatAmount(value, false, true)}
                   />
                   <Tooltip
                     contentStyle={{
@@ -285,7 +287,7 @@ export default function DashboardOverview({ onNavigate }: { onNavigate?: (page: 
                       borderRadius: '8px',
                       fontSize: '12px',
                     }}
-                    formatter={(value: number) => [`$${value}`, 'Earnings']}
+                    formatter={(value: number) => [formatAmount(value), 'Earnings']}
                   />
                   <Area
                     type="monotone"
@@ -329,8 +331,7 @@ export default function DashboardOverview({ onNavigate }: { onNavigate?: (page: 
                       <div className="mt-1 flex items-center gap-2">
                         {activity.amount !== undefined && (
                           <Badge variant="secondary" className="text-xs">
-                            {activity.type === 'credit' || activity.type === 'investment' ? '+' : '-'}$
-                            {activity.amount}
+                            {activity.type === 'credit' || activity.type === 'investment' ? '+' : '-'}{formatAmount(activity.amount)}
                           </Badge>
                         )}
                         <span className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -413,12 +414,12 @@ export default function DashboardOverview({ onNavigate }: { onNavigate?: (page: 
             <div className="grid grid-cols-3 gap-4">
               <div className="rounded-lg bg-muted/50 p-4 text-center">
                 <DollarSign className="h-5 w-5 text-muted-foreground mx-auto mb-1" />
-                <p className="text-lg font-bold text-foreground">${investmentSummary.totalInvested.toFixed(0)}</p>
+                <p className="text-lg font-bold text-foreground">{formatAmount(investmentSummary.totalInvested, true, true)}</p>
                 <p className="text-xs text-muted-foreground">Invested</p>
               </div>
               <div className="rounded-lg bg-gold/5 border border-gold/10 p-4 text-center">
                 <TrendingUp className="h-5 w-5 text-gold mx-auto mb-1" />
-                <p className="text-lg font-bold text-foreground">${investmentSummary.totalReturns.toFixed(0)}</p>
+                <p className="text-lg font-bold text-foreground">{formatAmount(investmentSummary.totalReturns, true, true)}</p>
                 <p className="text-xs text-muted-foreground">Expected</p>
               </div>
               <div className="rounded-lg bg-green-50 dark:bg-green-500/10 border border-green-100 dark:border-green-500/20 p-4 text-center">
@@ -432,7 +433,7 @@ export default function DashboardOverview({ onNavigate }: { onNavigate?: (page: 
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Expected ROI</span>
                   <span className="font-semibold text-green-600 dark:text-green-400">
-                    +${(investmentSummary.totalReturns - investmentSummary.totalInvested).toFixed(2)}
+                    +{formatAmount(investmentSummary.totalReturns - investmentSummary.totalInvested)}
                   </span>
                 </div>
               </div>

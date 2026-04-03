@@ -60,6 +60,7 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import PageWrapper from '@/components/shared/PageWrapper';
 import { useAuthStore } from '@/store/auth';
+import { useCurrencyStore, CURRENCIES, type Currency } from '@/store/currency';
 import { toast } from '@/hooks/use-toast';
 
 interface Achievement {
@@ -105,7 +106,8 @@ export default function SettingsPage() {
   const [courseReminders, setCourseReminders] = useState(false);
   const [marketingEmails, setMarketingEmails] = useState(false);
   const [language, setLanguage] = useState('en');
-  const [currency, setCurrency] = useState('usd');
+  const activeCurrency = useCurrencyStore((s) => s.activeCurrency);
+  const setCurrencyStore = useCurrencyStore((s) => s.setCurrency);
   const [savingPrefs, setSavingPrefs] = useState(false);
 
   // Security state
@@ -359,15 +361,14 @@ export default function SettingsPage() {
                       <DollarSign className="h-4 w-4 text-muted-foreground" />
                       Currency Display
                     </Label>
-                    <Select value={currency} onValueChange={setCurrency}>
+                    <Select value={activeCurrency} onValueChange={(v) => setCurrencyStore(v as Currency)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select currency" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="usd">USD ($)</SelectItem>
-                        <SelectItem value="eur">EUR (€)</SelectItem>
-                        <SelectItem value="gbp">GBP (£)</SelectItem>
-                        <SelectItem value="ngn">NGN (₦)</SelectItem>
+                        <SelectItem value="NGN">🇳🇬 NGN (₦) — Naira</SelectItem>
+                        <SelectItem value="USD">🇺🇸 USD ($) — Dollar</SelectItem>
+                        <SelectItem value="USDT">💲 USDT (₮) — Tether</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
