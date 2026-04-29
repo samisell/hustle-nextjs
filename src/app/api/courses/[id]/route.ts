@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { verifyToken } from '@/lib/auth';
 
+type UserProgress = {
+  enrolled: true;
+  enrollment: NonNullable<Awaited<ReturnType<typeof db.enrollment.findUnique>>>;
+  completedLessonIds: string[];
+};
+
 // GET /api/courses/[id] - Get single course with lessons, skill category, and user certifications
 export async function GET(
   req: NextRequest,
@@ -37,8 +43,8 @@ export async function GET(
 
     // If user is authenticated, include their progress and certification status
     const authHeader = req.headers.get('authorization');
-    let userProgress = null;
-    let certification = null;
+    let userProgress: UserProgress | null = null;
+    let certification: Awaited<ReturnType<typeof db.courseCertification.findUnique>> = null;
 
     if (authHeader?.startsWith('Bearer ')) {
       const token = authHeader.split(' ')[1];
