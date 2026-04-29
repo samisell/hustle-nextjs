@@ -10,16 +10,20 @@ function authenticate(req: NextRequest) {
 }
 
 // Support both PUT (mark read) and DELETE (remove)
-export async function PUT(req: NextRequest) {
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const payload = authenticate(req);
     if (!payload) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    const { id } = await params;
 
     // Mark as read
     await db.notification.update({
-      where: { id: req.params.id, userId: payload.userId },
+      where: { id, userId: payload.userId },
       data: { read: true },
     });
 
@@ -29,15 +33,19 @@ export async function PUT(req: NextRequest) {
   }
 }
 
-export async function DELETE(req: NextRequest) {
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const payload = authenticate(req);
     if (!payload) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    const { id } = await params;
 
     await db.notification.delete({
-      where: { id: req.params.id, userId: payload.userId },
+      where: { id, userId: payload.userId },
     });
 
     return NextResponse.json({ success: true });
