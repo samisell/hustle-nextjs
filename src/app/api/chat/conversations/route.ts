@@ -9,6 +9,31 @@ function authenticate(req: NextRequest) {
   return verifyToken(token);
 }
 
+type ConversationListItem = {
+  id: string;
+  name: string | null;
+  isGroup: boolean;
+  lastMessageAt: string | null;
+  members: {
+    id: string;
+    name: string;
+    avatar: string | null;
+    joinedAt: string;
+  }[];
+  otherMembers: {
+    id: string;
+    name: string;
+    avatar: string | null;
+  }[];
+  lastMessage: {
+    id: string;
+    content: string;
+    createdAt: string;
+    userId: string;
+  } | null;
+  unreadCount: number;
+};
+
 // GET /api/chat/conversations - List user's conversations
 export async function GET(req: NextRequest) {
   try {
@@ -38,7 +63,7 @@ export async function GET(req: NextRequest) {
       orderBy: { conversation: { lastMessageAt: 'desc' } },
     });
 
-    const conversations = [];
+    const conversations: ConversationListItem[] = [];
 
     for (const membership of memberships) {
       const conv = membership.conversation;
