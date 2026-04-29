@@ -342,7 +342,7 @@ const coverSection = {
       },
     },
     titlePage: true,
-    sectionType: SectionType.TITLE_PAGE,
+    sectionType: SectionType.NEXT_PAGE,
   },
   children: [
     // Spacer to push content to vertical center
@@ -2827,7 +2827,7 @@ const backCoverSection = {
         right: convertInchesToTwip(1),
       },
     },
-    sectionType: SectionType.TITLE_PAGE,
+    sectionType: SectionType.NEXT_PAGE,
   },
   children: [
     ...Array(10).fill(null).map(() => new Paragraph({ spacing: { after: 200 }, children: [] })),
