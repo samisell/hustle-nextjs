@@ -10,6 +10,17 @@ function authenticate(req: NextRequest) {
   return verifyToken(token);
 }
 
+type MyContribution = {
+  id: string;
+  amount: number;
+  status: string;
+  paymentMethod: string;
+  txRef: string | null;
+  paidAt: Date | null;
+  refundedAt: Date | null;
+  createdAt: Date;
+};
+
 // GET /api/escrow/[id] - Get full escrow details
 export async function GET(
   req: NextRequest,
@@ -57,7 +68,7 @@ export async function GET(
     const fundingPercentage = getFundingPercentage(escrow.collectedAmount, escrow.targetAmount);
 
     // For regular users, find their specific contribution
-    let myContribution = null;
+    let myContribution: MyContribution | null = null;
     if (payload.role !== 'admin') {
       const contribution = escrow.contributions.find(
         (c) => c.userId === payload.userId
