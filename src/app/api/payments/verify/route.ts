@@ -151,7 +151,7 @@ async function verifyCryptoPayment(payment: any) {
       const invoice = info.result;
 
       if (invoice.status === 'paid' || invoice.status === 'paid_over') {
-        const updatedPayment = await processSuccessfulPayment(payment, invoice.txid || invoice.uuid, 'Cryptomus');
+        const updatedPayment = await processSuccessfulPayment(payment, invoice.uuid || invoice.order_id, 'Cryptomus');
 
         return NextResponse.json({
           status: updatedPayment.status,
