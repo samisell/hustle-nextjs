@@ -1,0 +1,17 @@
+.git
+.next
+node_modules
+npm-debug.log
+dev.log
+server.log
+Dockerfile*
+docker-compose*.yml
+bk
+download
+docs
+examples
+skills
+mini-services
+worklog.md
+worklog.md.bak
+*.docx

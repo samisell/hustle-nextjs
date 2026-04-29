@@ -577,44 +577,45 @@ export async function createPayoutRequest(data: {
     return { payout: null, error: 'Insufficient wallet balance' };
   }
 
-  // Debit wallet
-  await db.wallet.update({
-    where: { userId },
-    data: { balance: { decrement: amount } },
-  });
+  const payout = await db.$transaction(async (tx) => {
+    await tx.wallet.update({
+      where: { userId },
+      data: { balance: { decrement: amount } },
+    });
 
-  await db.transaction.create({
-    data: {
-      walletId: wallet.id,
-      type: 'debit',
-      amount,
-      description: `Payout request via ${method}`,
-    },
-  });
+    await tx.transaction.create({
+      data: {
+        walletId: wallet.id,
+        type: 'debit',
+        amount,
+        description: `Payout request via ${method}`,
+      },
+    });
 
-  // Create payout
-  const payout = await db.payout.create({
-    data: {
-      userId,
-      amount,
-      method,
-      currency,
-      walletAddress,
-      bankName,
-      bankAccount,
-      bankAccountName,
-      status: 'pending',
-    },
-  });
+    const createdPayout = await tx.payout.create({
+      data: {
+        userId,
+        amount,
+        method,
+        currency,
+        walletAddress,
+        bankName,
+        bankAccount,
+        bankAccountName,
+        status: 'pending',
+      },
+    });
 
-  // Notify
-  await db.notification.create({
-    data: {
-      userId,
-      title: 'Payout Requested',
-      message: `Your payout of $${amount.toFixed(2)} via ${method.replace('_', ' ')} has been submitted and is pending processing.`,
-      type: 'info',
-    },
+    await tx.notification.create({
+      data: {
+        userId,
+        title: 'Payout Requested',
+        message: `Your payout of $${amount.toFixed(2)} via ${method.replace('_', ' ')} has been submitted and is pending processing.`,
+        type: 'info',
+      },
+    });
+
+    return createdPayout;
   });
 
   return { payout };
@@ -629,60 +630,63 @@ export async function processPayout(payoutId: string, action: 'complete' | 'reje
   if (payout.status !== 'pending') throw new Error('Payout is not pending');
 
   if (action === 'complete') {
-    await db.payout.update({
-      where: { id: payoutId },
-      data: {
-        status: 'completed',
-        txHash,
-        reference,
-        processedAt: new Date(),
-        notes,
-      },
-    });
-
-    await db.notification.create({
-      data: {
-        userId: payout.userId,
-        title: 'Payout Completed!',
-        message: `Your payout of $${payout.amount.toFixed(2)} via ${payout.method.replace('_', ' ')} has been processed successfully.${txHash ? ` TX: ${txHash}` : ''}${reference ? ` Ref: ${reference}` : ''}`,
-        type: 'success',
-      },
-    });
-  } else {
-    // Refund wallet on rejection
-    await db.payout.update({
-      where: { id: payoutId },
-      data: {
-        status: 'rejected',
-        notes,
-        processedAt: new Date(),
-      },
-    });
-
-    const wallet = await db.wallet.findUnique({ where: { userId: payout.userId } });
-    if (wallet) {
-      await db.wallet.update({
-        where: { userId: payout.userId },
-        data: { balance: { increment: payout.amount } },
-      });
-
-      await db.transaction.create({
+    await db.$transaction(async (tx) => {
+      await tx.payout.update({
+        where: { id: payoutId },
         data: {
-          walletId: wallet.id,
-          type: 'credit',
-          amount: payout.amount,
-          description: `Refunded rejected payout (${payout.method})`,
+          status: 'completed',
+          txHash,
+          reference,
+          processedAt: new Date(),
+          notes,
         },
       });
-    }
 
-    await db.notification.create({
-      data: {
-        userId: payout.userId,
-        title: 'Payout Rejected',
-        message: `Your payout of $${payout.amount.toFixed(2)} was rejected and refunded to your wallet.${notes ? ` Reason: ${notes}` : ''}`,
-        type: 'warning',
-      },
+      await tx.notification.create({
+        data: {
+          userId: payout.userId,
+          title: 'Payout Completed!',
+          message: `Your payout of $${payout.amount.toFixed(2)} via ${payout.method.replace('_', ' ')} has been processed successfully.${txHash ? ` TX: ${txHash}` : ''}${reference ? ` Ref: ${reference}` : ''}`,
+          type: 'success',
+        },
+      });
+    });
+  } else {
+    await db.$transaction(async (tx) => {
+      await tx.payout.update({
+        where: { id: payoutId },
+        data: {
+          status: 'rejected',
+          notes,
+          processedAt: new Date(),
+        },
+      });
+
+      const wallet = await tx.wallet.findUnique({ where: { userId: payout.userId } });
+      if (wallet) {
+        await tx.wallet.update({
+          where: { userId: payout.userId },
+          data: { balance: { increment: payout.amount } },
+        });
+
+        await tx.transaction.create({
+          data: {
+            walletId: wallet.id,
+            type: 'credit',
+            amount: payout.amount,
+            description: `Refunded rejected payout (${payout.method})`,
+          },
+        });
+      }
+
+      await tx.notification.create({
+        data: {
+          userId: payout.userId,
+          title: 'Payout Rejected',
+          message: `Your payout of $${payout.amount.toFixed(2)} was rejected and refunded to your wallet.${notes ? ` Reason: ${notes}` : ''}`,
+          type: 'warning',
+        },
+      });
     });
   }
 }

@@ -89,38 +89,40 @@ async function handleWithdraw(userId: string, amount: number, walletAddress: str
     return NextResponse.json({ error: 'Insufficient balance.' }, { status: 400 });
   }
 
-  // Create withdrawal request
-  const withdrawal = await db.withdrawal.create({
-    data: {
-      userId,
-      amount,
-      walletAddress,
-      status: 'pending',
-    },
-  });
+  const withdrawal = await db.$transaction(async (tx) => {
+    const createdWithdrawal = await tx.withdrawal.create({
+      data: {
+        userId,
+        amount,
+        walletAddress,
+        status: 'pending',
+      },
+    });
 
-  // Debit from wallet
-  await db.wallet.update({
-    where: { userId },
-    data: { balance: { decrement: amount } },
-  });
+    await tx.wallet.update({
+      where: { userId },
+      data: { balance: { decrement: amount } },
+    });
 
-  await db.transaction.create({
-    data: {
-      walletId: wallet.id,
-      type: 'debit',
-      amount,
-      description: `Withdrawal request to ${walletAddress}`,
-    },
-  });
+    await tx.transaction.create({
+      data: {
+        walletId: wallet.id,
+        type: 'debit',
+        amount,
+        description: `Withdrawal request to ${walletAddress}`,
+      },
+    });
 
-  await db.notification.create({
-    data: {
-      userId,
-      title: 'Withdrawal Requested',
-      message: `Your withdrawal of $${amount.toFixed(2)} has been submitted and is pending approval.`,
-      type: 'info',
-    },
+    await tx.notification.create({
+      data: {
+        userId,
+        title: 'Withdrawal Requested',
+        message: `Your withdrawal of $${amount.toFixed(2)} has been submitted and is pending approval.`,
+        type: 'info',
+      },
+    });
+
+    return createdWithdrawal;
   });
 
   return NextResponse.json({ withdrawal }, { status: 201 });

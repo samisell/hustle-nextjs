@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
   GraduationCap,
@@ -469,7 +470,7 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
       </section>
 
       {/* ═══ Features Section ═══ */}
-      <section className="py-20">
+      <section id="courses" className="py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center">
             <h2 className="text-3xl font-bold text-foreground">Everything You Need to Succeed</h2>
@@ -575,7 +576,7 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
       </section>
 
       {/* ═══ How It Works (with images) ═══ */}
-      <section className="border-t border-border bg-muted/20 py-20">
+      <section id="community" className="border-t border-border bg-muted/20 py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center">
             <h2 className="text-3xl font-bold text-foreground">How It Works</h2>
@@ -644,7 +645,7 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
       </section>
 
       {/* ═══ Success Stories ═══ */}
-      <section className="border-t border-border bg-muted/20 py-20">
+      <section id="investments" className="border-t border-border bg-muted/20 py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center">
             <h2 className="text-3xl font-bold text-foreground">Success Stories</h2>
@@ -699,7 +700,7 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
       </section>
 
       {/* ═══ Testimonials ═══ */}
-      <section className="py-20">
+      <section id="referral-program" className="py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center">
             <h2 className="text-3xl font-bold text-foreground">What Our Students Say</h2>
@@ -833,7 +834,7 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
       </section>
 
       {/* ═══ Pricing Section ═══ */}
-      <section className="py-20">
+      <section id="escrow-system" className="py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center">
             <h2 className="text-3xl font-bold text-foreground">Choose Your Plan</h2>
@@ -952,38 +953,43 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
             <div>
               <h4 className="text-sm font-semibold text-foreground mb-4">Platform</h4>
               <ul className="space-y-2.5">
-                {['Courses', 'Investments', 'Referral Program', 'Escrow System', 'Community Forum'].map((link) => (
-                  <li key={link}><button onClick={onRegister} className="text-sm text-muted-foreground hover:text-gold transition-colors">{link}</button></li>
-                ))}
+                <li><Link href="/#courses" className="text-sm text-muted-foreground hover:text-gold transition-colors">Courses</Link></li>
+                <li><Link href="/#investments" className="text-sm text-muted-foreground hover:text-gold transition-colors">Investments</Link></li>
+                <li><Link href="/#referral-program" className="text-sm text-muted-foreground hover:text-gold transition-colors">Referral Program</Link></li>
+                <li><Link href="/#escrow-system" className="text-sm text-muted-foreground hover:text-gold transition-colors">Escrow System</Link></li>
+                <li><Link href="/#community" className="text-sm text-muted-foreground hover:text-gold transition-colors">Community Forum</Link></li>
               </ul>
             </div>
             {/* Company */}
             <div>
               <h4 className="text-sm font-semibold text-foreground mb-4">Company</h4>
               <ul className="space-y-2.5">
-                {['About Us', 'Careers', 'Blog', 'Contact', 'Press Kit'].map((link) => (
-                  <li key={link}><button className="text-sm text-muted-foreground hover:text-gold transition-colors">{link}</button></li>
-                ))}
+                <li><Link href="/about" className="text-sm text-muted-foreground hover:text-gold transition-colors">About Us</Link></li>
+                <li><Link href="/careers" className="text-sm text-muted-foreground hover:text-gold transition-colors">Careers</Link></li>
+                <li><Link href="/blog" className="text-sm text-muted-foreground hover:text-gold transition-colors">Blog</Link></li>
+                <li><Link href="/contact" className="text-sm text-muted-foreground hover:text-gold transition-colors">Contact</Link></li>
+                <li><Link href="/press-kit" className="text-sm text-muted-foreground hover:text-gold transition-colors">Press Kit</Link></li>
               </ul>
             </div>
             {/* Support */}
             <div>
               <h4 className="text-sm font-semibold text-foreground mb-4">Support</h4>
               <ul className="space-y-2.5">
-                {['Help Center', 'Terms of Service', 'Privacy Policy', 'Cookie Policy', 'Status Page'].map((link) => (
-                  <li key={link}><button className="text-sm text-muted-foreground hover:text-gold transition-colors">{link}</button></li>
-                ))}
+                <li><Link href="/help-center" className="text-sm text-muted-foreground hover:text-gold transition-colors">Help Center</Link></li>
+                <li><Link href="/terms" className="text-sm text-muted-foreground hover:text-gold transition-colors">Terms of Service</Link></li>
+                <li><Link href="/privacy" className="text-sm text-muted-foreground hover:text-gold transition-colors">Privacy Policy</Link></li>
+                <li><Link href="/cookies" className="text-sm text-muted-foreground hover:text-gold transition-colors">Cookie Policy</Link></li>
+                <li><Link href="/status" className="text-sm text-muted-foreground hover:text-gold transition-colors">Status Page</Link></li>
               </ul>
             </div>
           </div>
           <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-border pt-8 md:flex-row">
             <p className="text-sm text-muted-foreground">&copy; {new Date().getFullYear()} Hustle University. All rights reserved.</p>
             <div className="flex items-center gap-3">
-              {['Twitter', 'LinkedIn', 'Instagram', 'YouTube'].map((social) => (
-                <button key={social} className="text-xs text-muted-foreground hover:text-gold transition-colors px-3 py-1.5 rounded-md border border-border/50 hover:border-gold/20">
-                  {social}
-                </button>
-              ))}
+              <a href="https://twitter.com" target="_blank" rel="noreferrer" className="text-xs text-muted-foreground hover:text-gold transition-colors px-3 py-1.5 rounded-md border border-border/50 hover:border-gold/20">Twitter</a>
+              <a href="https://www.linkedin.com" target="_blank" rel="noreferrer" className="text-xs text-muted-foreground hover:text-gold transition-colors px-3 py-1.5 rounded-md border border-border/50 hover:border-gold/20">LinkedIn</a>
+              <a href="https://www.instagram.com" target="_blank" rel="noreferrer" className="text-xs text-muted-foreground hover:text-gold transition-colors px-3 py-1.5 rounded-md border border-border/50 hover:border-gold/20">Instagram</a>
+              <a href="https://www.youtube.com" target="_blank" rel="noreferrer" className="text-xs text-muted-foreground hover:text-gold transition-colors px-3 py-1.5 rounded-md border border-border/50 hover:border-gold/20">YouTube</a>
             </div>
           </div>
         </div>

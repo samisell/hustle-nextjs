@@ -15,24 +15,24 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Z.ai Code Scaffold - AI-Powered Development",
-  description: "Modern Next.js scaffold optimized for AI-powered development with Z.ai. Built with TypeScript, Tailwind CSS, and shadcn/ui.",
-  keywords: ["Z.ai", "Next.js", "TypeScript", "Tailwind CSS", "shadcn/ui", "AI development", "React"],
-  authors: [{ name: "Z.ai Team" }],
+  title: "Hustle University",
+  description: "Hustle University platform for learning, investing, community collaboration, and wallet-powered growth.",
+  keywords: ["Hustle University", "Learning", "Investments", "Referrals", "Community", "Next.js", "Prisma"],
+  authors: [{ name: "Hustle University Team" }],
   icons: {
-    icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
+    icon: "/favicon.ico",
   },
   openGraph: {
-    title: "Z.ai Code Scaffold",
-    description: "AI-powered development with modern React stack",
-    url: "https://chat.z.ai",
-    siteName: "Z.ai",
+    title: "Hustle University",
+    description: "Learn, invest, and grow your network with Hustle University.",
+    url: "https://hustleuniversity.app",
+    siteName: "Hustle University",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Z.ai Code Scaffold",
-    description: "AI-powered development with modern React stack",
+    title: "Hustle University",
+    description: "Learn, invest, and grow your network with Hustle University.",
   },
 };
 

@@ -26,84 +26,83 @@ export async function POST(req: NextRequest) {
     const hashedPassword = await bcrypt.hash(password, 10);
     const newReferralCode = generateReferralCode();
 
-    const user = await db.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        referralCode: newReferralCode,
-        referredBy: referralCode || null,
-        emailVerified: new Date(),
-      },
-    });
+    const user = await db.$transaction(async (tx) => {
+      const createdUser = await tx.user.create({
+        data: {
+          name,
+          email,
+          password: hashedPassword,
+          referralCode: newReferralCode,
+          referredBy: referralCode || null,
+          emailVerified: new Date(),
+        },
+      });
 
-    // Create wallet for the user
-    const wallet = await db.wallet.create({
-      data: {
-        userId: user.id,
-      },
-    });
+      await tx.wallet.create({
+        data: {
+          userId: createdUser.id,
+        },
+      });
 
-    // Handle referral
-    if (referralCode) {
-      const referrer = await db.user.findUnique({ where: { referralCode } });
-      if (referrer) {
-        await db.referral.create({
-          data: {
-            referrerId: referrer.id,
-            referredId: user.id,
-            earnings: REFERRAL_BONUS,
-          },
-        });
-
-        // Credit referrer's wallet
-        const referrerWallet = await db.wallet.findUnique({ where: { userId: referrer.id } });
-        if (referrerWallet) {
-          await db.wallet.update({
-            where: { userId: referrer.id },
-            data: { balance: { increment: REFERRAL_BONUS } },
-          });
-
-          await db.transaction.create({
+      if (referralCode) {
+        const referrer = await tx.user.findUnique({ where: { referralCode } });
+        if (referrer) {
+          await tx.referral.create({
             data: {
-              walletId: referrerWallet.id,
-              type: 'credit',
-              amount: REFERRAL_BONUS,
-              description: `Referral bonus for inviting ${user.name}`,
+              referrerId: referrer.id,
+              referredId: createdUser.id,
+              earnings: REFERRAL_BONUS,
             },
           });
 
-          await db.earning.create({
-            data: {
-              walletId: referrerWallet.id,
-              userId: referrer.id,
-              amount: REFERRAL_BONUS,
-              source: 'referral',
-              description: `Referral bonus for inviting ${user.name}`,
-            },
-          });
+          const referrerWallet = await tx.wallet.findUnique({ where: { userId: referrer.id } });
+          if (referrerWallet) {
+            await tx.wallet.update({
+              where: { userId: referrer.id },
+              data: { balance: { increment: REFERRAL_BONUS } },
+            });
 
-          // Notify referrer
-          await db.notification.create({
-            data: {
-              userId: referrer.id,
-              title: 'New Referral!',
-              message: `You earned $${REFERRAL_BONUS} for referring ${user.name}!`,
-              type: 'success',
-            },
-          });
+            await tx.transaction.create({
+              data: {
+                walletId: referrerWallet.id,
+                type: 'credit',
+                amount: REFERRAL_BONUS,
+                description: `Referral bonus for inviting ${createdUser.name}`,
+              },
+            });
+
+            await tx.earning.create({
+              data: {
+                walletId: referrerWallet.id,
+                userId: referrer.id,
+                amount: REFERRAL_BONUS,
+                source: 'referral',
+                description: `Referral bonus for inviting ${createdUser.name}`,
+              },
+            });
+
+            await tx.notification.create({
+              data: {
+                userId: referrer.id,
+                title: 'New Referral!',
+                message: `You earned $${REFERRAL_BONUS} for referring ${createdUser.name}!`,
+                type: 'success',
+              },
+            });
+          }
         }
       }
-    }
 
-    // Welcome notification
-    await db.notification.create({
-      data: {
-        userId: user.id,
-        title: 'Welcome to Hustle University!',
-        message: 'Your account has been created successfully. Start exploring courses and grow your hustle!',
-        type: 'info',
-      },
+      await tx.notification.create({
+        data: {
+          userId: createdUser.id,
+          title: 'Welcome to Hustle University!',
+          message: 'Your account has been created successfully. Start exploring courses and grow your hustle!',
+          type: 'info',
+        },
+      });
+
+      return createdUser;
     });
 
     // Auto-login: return token immediately

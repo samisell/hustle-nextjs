@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'hustle-university-secret-key-2024';
+const JWT_SECRET = process.env.JWT_SECRET;
 const OTP_EXPIRY_MINUTES = 10;
 
 export interface JWTPayload {
@@ -10,10 +10,16 @@ export interface JWTPayload {
 }
 
 export function signToken(payload: JWTPayload): string {
+  if (!JWT_SECRET) {
+    throw new Error('JWT_SECRET is not configured');
+  }
   return jwt.sign(payload, JWT_SECRET, { expiresIn: '30d' });
 }
 
 export function verifyToken(token: string): JWTPayload | null {
+  if (!JWT_SECRET) {
+    return null;
+  }
   try {
     return jwt.verify(token, JWT_SECRET) as JWTPayload;
   } catch {

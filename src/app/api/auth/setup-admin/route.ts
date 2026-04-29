@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
-const SETUP_SECRET = process.env.ADMIN_SETUP_SECRET || 'hustle-admin-setup-2024';
+const SETUP_SECRET = process.env.ADMIN_SETUP_SECRET;
 
 /**
  * POST /api/auth/setup-admin
@@ -12,6 +12,13 @@ const SETUP_SECRET = process.env.ADMIN_SETUP_SECRET || 'hustle-admin-setup-2024'
  */
 export async function POST(req: NextRequest) {
   try {
+    if (!SETUP_SECRET) {
+      return NextResponse.json(
+        { error: 'ADMIN_SETUP_SECRET is not configured.' },
+        { status: 500 }
+      );
+    }
+
     const body = await req.json();
     const { email, secret } = body;
 
