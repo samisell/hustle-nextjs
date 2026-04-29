@@ -346,6 +346,7 @@ export default function CoursesPage() {
     // Fallback: use the fallback course data
     const c = FALLBACK_COURSES.find(x => x.id === courseId);
     if (c) {
+      const fallbackProgress = c.userProgress?.progress ?? 0;
       setSelectedCourse({
         id: c.id,
         title: c.title,
@@ -357,8 +358,8 @@ export default function CoursesPage() {
         lessons: FALLBACK_LESSONS,
         userProgress: c.userProgress?.enrolled ? {
           enrolled: true,
-          enrollment: { progress: c.userProgress.progress },
-          completedLessonIds: FALLBACK_LESSONS.filter((_, i) => i < Math.floor(c.userProgress.progress / 100 * FALLBACK_LESSONS.length)).map(l => l.id),
+          enrollment: { progress: fallbackProgress },
+          completedLessonIds: FALLBACK_LESSONS.filter((_, i) => i < Math.floor((fallbackProgress / 100) * FALLBACK_LESSONS.length)).map(l => l.id),
         } : null,
         certification: c.hasCertification ? { id: 'cert-1', badgeName: 'Passive Income Pro', earnedAt: '2024-03-10T12:00:00Z' } : null,
         _count: { enrollments: c._count.enrollments },

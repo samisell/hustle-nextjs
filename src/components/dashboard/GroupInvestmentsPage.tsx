@@ -75,7 +75,7 @@ interface Deal {
   title: string;
   description: string;
   longDescription?: string;
-  category: { id: string; name: string; icon: string; color: string };
+  category: { id: string; name: string; slug?: string; icon: string; color: string };
   location: string | null;
   riskLevel: RiskLevel;
   status: DealStatus;
@@ -290,7 +290,7 @@ export default function GroupInvestmentsPage() {
   /* ─── Computed Values ─── */
   const filteredDeals = useMemo(() => {
     if (activeCategory === 'all') return deals;
-    return deals.filter((d) => d.category?.slug === activeCategory);
+    return deals.filter((d) => d.category?.slug === activeCategory || d.category?.id === activeCategory);
   }, [deals, activeCategory]);
 
   const stats = useMemo(() => {
