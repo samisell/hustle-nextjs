@@ -9,6 +9,17 @@ function authenticate(req: NextRequest) {
   return verifyToken(token);
 }
 
+type LeaderboardEntry = {
+  rank: number;
+  name: string;
+  email: string;
+  avatar: string | null;
+  totalEarnings: number;
+  totalReferrals: number;
+  commissionCount: number;
+  badge: string | null;
+};
+
 // GET /api/community/leaderboard - Top 20 referrers by commission earnings
 export async function GET(req: NextRequest) {
   try {
@@ -93,7 +104,7 @@ export async function GET(req: NextRequest) {
 
     const currentUserEntry = allCommissions.find((c) => c.userId === payload.userId);
     let currentUserRank: number | null = null;
-    let currentUserStats = null;
+    let currentUserStats: LeaderboardEntry | null = null;
 
     if (currentUserEntry) {
       currentUserRank = allCommissions.findIndex((c) => c.userId === payload.userId) + 1;
