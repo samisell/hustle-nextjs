@@ -31,6 +31,7 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/db ./db
 
 RUN chown -R nextjs:nextjs /app
+RUN mkdir -p /home/nextjs && chown nextjs:nextjs /home/nextjs
 USER nextjs
 
 EXPOSE 3000
