@@ -35,7 +35,7 @@ services:
       NODE_ENV: production
       PORT: 3300
       DATABASE_URL: mysql://hustle:hustlepass@mysql:3306/hustle
-    command: sh -c "npx prisma db push --skip-generate && node server.js"
+    command: sh -c "npx prisma db push --schema=./prisma/schema.prisma && node server.js"
 
 volumes:
   mysql_data:
