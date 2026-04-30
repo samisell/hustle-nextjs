@@ -1,20 +1,40 @@
 services:
+  mysql:
+    image: mysql:8.4
+    container_name: hustle-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: hustle
+      MYSQL_USER: hustle
+      MYSQL_PASSWORD: hustlepass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
   app:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: hustle-app
     restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
     ports:
       - "3000:3000"
     env_file:
-      - .env
+      - docker.env
     environment:
       NODE_ENV: production
       PORT: 3000
-      DATABASE_URL: file:./db/custom.db
-    volumes:
-      - hustle_db:/app/db
+      DATABASE_URL: mysql://hustle:hustlepass@mysql:3306/hustle
 
 volumes:
-  hustle_db:
+  mysql_data:
