@@ -5,7 +5,9 @@ ENV NPM_CONFIG_OFFLINE=false \
     NPM_CONFIG_PREFER_ONLINE=true \
     NPM_CONFIG_REGISTRY=https://registry.npmjs.org/
 COPY package.json package-lock.json ./
+COPY prisma.config.ts ./
 COPY prisma ./prisma
+ENV DATABASE_URL="mysql://hustle:hustlepass@mysql:3306/hustle"
 RUN npm ci --no-audit --no-fund --prefer-online --prefer-offline=false --offline=false
 
 FROM node:22-bookworm-slim AS builder
