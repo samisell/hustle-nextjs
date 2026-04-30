@@ -5,6 +5,7 @@ ENV NPM_CONFIG_OFFLINE=false \
     NPM_CONFIG_PREFER_ONLINE=true \
     NPM_CONFIG_REGISTRY=https://registry.npmjs.org/
 COPY package.json package-lock.json ./
+COPY prisma ./prisma
 RUN npm ci --no-audit --no-fund --prefer-online --prefer-offline=false --offline=false
 
 FROM node:22-bookworm-slim AS builder
