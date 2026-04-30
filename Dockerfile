@@ -5,7 +5,6 @@ ENV NPM_CONFIG_OFFLINE=false \
     NPM_CONFIG_PREFER_ONLINE=true \
     NPM_CONFIG_REGISTRY=https://registry.npmjs.org/
 COPY package.json package-lock.json ./
-COPY prisma.config.ts ./
 COPY prisma ./prisma
 ENV DATABASE_URL="mysql://hustle:hustlepass@mysql:3306/hustle"
 RUN apt-get update -y && apt-get install -y openssl
