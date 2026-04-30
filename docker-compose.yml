@@ -28,12 +28,12 @@ services:
       mysql:
         condition: service_healthy
     ports:
-      - "3000:3000"
+      - "3001:3000"
     env_file:
       - docker.env
     environment:
       NODE_ENV: production
-      PORT: 3000
+      PORT: 3300
       DATABASE_URL: mysql://hustle:hustlepass@mysql:3306/hustle
 
 volumes:
