@@ -28,7 +28,7 @@ services:
       mysql:
         condition: service_healthy
     ports:
-      - "3001:3000"
+      - "3300:3000"
     env_file:
       - docker.env
     environment:
