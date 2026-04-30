@@ -8,6 +8,7 @@ COPY package.json package-lock.json ./
 COPY prisma.config.ts ./
 COPY prisma ./prisma
 ENV DATABASE_URL="mysql://hustle:hustlepass@mysql:3306/hustle"
+RUN apt-get update -y && apt-get install -y openssl
 RUN npm ci --no-audit --no-fund --prefer-online --prefer-offline=false --offline=false
 
 FROM node:22-bookworm-slim AS builder

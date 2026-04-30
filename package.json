@@ -6,12 +6,12 @@
     "dev": "next dev -p 3000",
     "build": "next build",
     "start": "bun .next/standalone/server.js",
-    "postinstall": "prisma generate --config=./prisma.config.ts --schema=./prisma/schema.prisma",
+    "postinstall": "prisma generate --schema=./prisma/schema.prisma",
     "lint": "eslint .",
-    "db:push": "prisma db push --config=./prisma.config.ts --schema=./prisma/schema.prisma",
-    "db:generate": "prisma generate --config=./prisma.config.ts --schema=./prisma/schema.prisma",
-    "db:migrate": "prisma migrate dev --config=./prisma.config.ts --schema=./prisma/schema.prisma",
-    "db:reset": "prisma migrate reset --config=./prisma.config.ts --schema=./prisma/schema.prisma"
+    "db:push": "prisma db push --schema=./prisma/schema.prisma",
+    "db:generate": "prisma generate --schema=./prisma/schema.prisma",
+    "db:migrate": "prisma migrate dev --schema=./prisma/schema.prisma",
+    "db:reset": "prisma migrate reset --schema=./prisma/schema.prisma"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
