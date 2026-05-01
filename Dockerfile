@@ -2,7 +2,7 @@ FROM node:22-bookworm-slim AS deps
 WORKDIR /app
 COPY package.json package-lock.json prisma ./
 RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
-RUN npm ci
+RUN npm install --legacy-peer-deps
 
 FROM node:22-bookworm-slim AS builder
 WORKDIR /app
