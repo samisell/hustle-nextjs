@@ -22,25 +22,17 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 RUN groupadd --system nextjs && useradd --system --gid nextjs nextjs
 
-# Set up the standalone server structure
-# 1. Copy the standalone files
-COPY --from=builder /app/.next/standalone ./
-# 2. Copy the static files into the expected location
-COPY --from=builder /app/.next/static ./.next/static
-# 3. Copy the public folder
-COPY --from=builder /app/public ./public
-# 4. Copy node_modules/prisma for the runtime db sync
-COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=builder /app/node_modules/effect ./node_modules/effect
-COPY --from=builder /app/node_modules/fast-check ./node_modules/fast-check
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
+# Copy EVERYTHING from builder to ensure all dependencies for Prisma and Next.js are present
+COPY --from=builder /app ./
+
+# Fix for Next.js standalone: Copy static/public assets into the standalone directory so they are served
+RUN cp -r .next/static .next/standalone/.next/static 2>/dev/null || true
+RUN cp -r public .next/standalone/public 2>/dev/null || true
 
 RUN chown -R nextjs:nextjs /app
 USER nextjs
 
 EXPOSE 3000
 
-# Start with the correct standalone server path (now at the root)
-CMD ["sh", "-c", "node node_modules/prisma/build/index.js db push --accept-data-loss && node server.js"]
+# Start with the prisma sync and the standalone server
+CMD ["sh", "-c", "node node_modules/prisma/build/index.js db push --accept-data-loss && node .next/standalone/server.js"]
