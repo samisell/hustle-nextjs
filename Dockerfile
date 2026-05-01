@@ -1,13 +1,8 @@
 FROM node:22-bookworm-slim AS deps
 WORKDIR /app
-ENV NPM_CONFIG_OFFLINE=false \
-    NPM_CONFIG_PREFER_OFFLINE=false \
-    NPM_CONFIG_PREFER_ONLINE=true \
-    NPM_CONFIG_REGISTRY=https://registry.npmjs.org/
-COPY package.json package-lock.json prisma.config.ts ./
-COPY prisma ./prisma
+COPY package.json package-lock.json prisma ./
 RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
-RUN npm ci --no-audit --no-fund --prefer-online --prefer-offline=false --offline=false
+RUN npm ci
 
 FROM node:22-bookworm-slim AS builder
 WORKDIR /app
@@ -26,21 +21,13 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 RUN groupadd --system nextjs && useradd --system --gid nextjs nextjs
 
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
-COPY --from=builder /app/node_modules/effect ./node_modules/effect
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
-COPY --from=builder /app/db ./db
+# Copy EVERYTHING from builder to ensure all dependencies are present
+COPY --from=builder /app ./
 
 RUN chown -R nextjs:nextjs /app
-RUN mkdir -p /home/nextjs && chown nextjs:nextjs /home/nextjs
 USER nextjs
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "node node_modules/prisma/build/index.js db push --skip-generate && node server.js"]
+# Use the simplest command to run the DB sync and start the app
+CMD ["sh", "-c", "npx prisma db push --skip-generate && npm start"]
