@@ -1,4 +1,6 @@
-import "dotenv/config"
+// Load dotenv only if available (not needed in Docker where env vars are injected)
+try { require("dotenv/config") } catch {}
+
 import { defineConfig, env } from "prisma/config"
 
 export default defineConfig({
