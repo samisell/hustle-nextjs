@@ -4,12 +4,10 @@ services:
     container_name: hustle-mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: rootpass
-      MYSQL_DATABASE: hustle
-      MYSQL_USER: hustle
-      MYSQL_PASSWORD: hustlepass
-    ports:
-      - "3306:3306"
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpass}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-hustle}
+      MYSQL_USER: ${MYSQL_USER:-hustle}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-hustlepass}
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
@@ -29,13 +27,13 @@ services:
         condition: service_healthy
     ports:
       - "3300:3000"
-    env_file:
-      - docker.env
     environment:
       NODE_ENV: production
-      PORT: 3300
-      DATABASE_URL: mysql://hustle:hustlepass@mysql:3306/hustle
-    command: sh -c "npx prisma db push --schema=./prisma/schema.prisma && node server.js"
+      PORT: 3000
+      NEXT_TELEMETRY_DISABLED: 1
+      DATABASE_URL: mysql://${MYSQL_USER:-hustle}:${MYSQL_PASSWORD:-hustlepass}@mysql:3306/${MYSQL_DATABASE:-hustle}
+      ADMIN_SETUP_SECRET: ${ADMIN_SETUP_SECRET:-hustle-admin-setup-2024}
+      JWT_SECRET: ${JWT_SECRET:-change-this-to-a-long-random-secret}
 
 volumes:
   mysql_data:
