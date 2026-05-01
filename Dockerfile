@@ -43,4 +43,4 @@ USER nextjs
 EXPOSE 3000
 
 # Start with the correct standalone server path (now at the root)
-CMD ["sh", "-c", "npx prisma db push --accept-data-loss && node server.js"]
+CMD ["sh", "-c", "node node_modules/prisma/build/index.js db push --accept-data-loss && node server.js"]
