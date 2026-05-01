@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev -p 3000",
     "build": "next build",
-    "start": "bun .next/standalone/server.js",
+    "start": "node server.js",
     "postinstall": "prisma generate --schema=./prisma/schema.prisma",
     "lint": "eslint .",
     "db:push": "prisma db push --schema=./prisma/schema.prisma",
