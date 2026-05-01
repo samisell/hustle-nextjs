@@ -40,4 +40,4 @@ USER nextjs
 EXPOSE 3000
 
 # Run DB sync and start
-CMD ["sh", "-c", "npx prisma db push --accept-data-loss && node server.js"]
+CMD ["sh", "-c", "npx prisma db push --accept-data-loss && node .next/standalone/server.js"]
