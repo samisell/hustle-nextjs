@@ -3,7 +3,7 @@ WORKDIR /app
 RUN apt-get update -y && apt-get install -y openssl build-essential python3 make && rm -rf /var/lib/apt/lists/*
 COPY package.json package-lock.json ./
 COPY prisma ./prisma
-RUN npm install --legacy-peer-deps --ignore-scripts
+RUN npm ci --legacy-peer-deps
 
 FROM node:22-bookworm-slim AS builder
 WORKDIR /app
@@ -22,17 +22,18 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 RUN groupadd --system nextjs && useradd --system --gid nextjs nextjs
 
-# Copy EVERYTHING from builder to ensure all dependencies for Prisma and Next.js are present
-COPY --from=builder /app ./
+# Copy standalone build
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nextjs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nextjs /app/.next/static ./.next/static
+# Copy prisma files for db push
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
+COPY --from=builder /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
 
-# Fix for Next.js standalone: Copy static/public assets into the standalone directory so they are served
-RUN cp -r .next/static .next/standalone/.next/static 2>/dev/null || true
-RUN cp -r public .next/standalone/public 2>/dev/null || true
-
-RUN chown -R nextjs:nextjs /app
 USER nextjs
 
 EXPOSE 3000
 
-# Start with the prisma sync and the standalone server
-CMD ["sh", "-c", "node node_modules/prisma/build/index.js db push --accept-data-loss && node .next/standalone/server.js"]
+# Run prisma db push before starting the server
+CMD ["sh", "-c", "./node_modules/.bin/prisma db push --accept-data-loss --schema=./prisma/schema.prisma && node server.js"]
