@@ -1,16 +1,18 @@
-import { PrismaClient } from '@prisma/client'
 import { PrismaPlanetScale } from '@prisma/adapter-planetscale'
-import { createPool } from 'mysql2/promise'
+import { PrismaClient } from '@prisma/client'
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }
 
-const connectionString = process.env.DATABASE_URL || ''
-const pool = createPool({
-  uri: connectionString,
+if (!process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL must be set')
+}
+
+// Use PlanetScale adapter for serverless database connections
+const adapter = new PrismaPlanetScale({ 
+  url: process.env.DATABASE_URL,
 })
-const adapter = new PrismaPlanetScale(pool)
 
 export const db =
   globalForPrisma.prisma ??
@@ -19,4 +21,4 @@ export const db =
     log: ['query'],
   })
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db

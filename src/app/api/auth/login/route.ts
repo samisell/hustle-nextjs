@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
       include: { subscription: true, wallet: true },
     });
 
-    if (!user) {
+    if (!user || !user.password) {
       return NextResponse.json({ error: 'Invalid email or password.' }, { status: 401 });
     }
 
@@ -42,6 +42,7 @@ export async function POST(req: NextRequest) {
       token,
     });
   } catch (error: any) {
+    console.error('[AUTH LOGIN ERROR]', error);
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
   }
 }
