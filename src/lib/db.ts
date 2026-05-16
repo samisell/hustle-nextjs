@@ -1,3 +1,4 @@
+import { PrismaMariaDb } from '@prisma/adapter-mariadb'
 import { PrismaPlanetScale } from '@prisma/adapter-planetscale'
 import { PrismaClient } from '@prisma/client'
 
@@ -18,6 +19,19 @@ function shouldUsePlanetScaleAdapter(databaseUrl: string): boolean {
   }
 }
 
+function createMysqlAdapter(databaseUrl: string) {
+  const parsed = new URL(databaseUrl)
+
+  return new PrismaMariaDb({
+    host: parsed.hostname,
+    port: parsed.port ? Number(parsed.port) : 3306,
+    user: decodeURIComponent(parsed.username),
+    password: decodeURIComponent(parsed.password),
+    database: parsed.pathname.replace(/^\//, ''),
+    connectionLimit: process.env.NODE_ENV === 'production' ? 10 : 5,
+  })
+}
+
 const databaseUrl = process.env.DATABASE_URL
 const usePlanetScaleAdapter = shouldUsePlanetScaleAdapter(databaseUrl)
 
@@ -25,7 +39,7 @@ const adapter = usePlanetScaleAdapter
   ? new PrismaPlanetScale({
       url: databaseUrl,
     })
-  : undefined
+  : createMysqlAdapter(databaseUrl)
 
 export const db =
   globalForPrisma.prisma ??
