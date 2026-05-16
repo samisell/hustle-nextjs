@@ -1,0 +1,49 @@
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-change-this-root-password}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-hustle}
+      MYSQL_USER: ${MYSQL_USER:-hustle}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-change-this-db-password}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - hustle-network
+
+  app:
+    image: venihost/hustle-nextjs:latest
+    restart: unless-stopped
+    depends_on:
+      - mysql
+    ports:
+      - "${APP_PORT:-3300}:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      NEXT_TELEMETRY_DISABLED: 1
+      DATABASE_URL: mysql://${MYSQL_USER:-hustle}:${MYSQL_PASSWORD:-change-this-db-password}@mysql:3306/${MYSQL_DATABASE:-hustle}
+      ADMIN_SETUP_SECRET: ${ADMIN_SETUP_SECRET:-change-this-admin-setup-secret}
+      JWT_SECRET: ${JWT_SECRET:-change-this-jwt-secret}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3300}
+      FLUTTERWAVE_PUBLIC_KEY: ${FLUTTERWAVE_PUBLIC_KEY:-}
+      FLUTTERWAVE_SECRET_KEY: ${FLUTTERWAVE_SECRET_KEY:-}
+      FLUTTERWAVE_WEBHOOK_SECRET: ${FLUTTERWAVE_WEBHOOK_SECRET:-}
+      CRYPTOMUS_API_KEY: ${CRYPTOMUS_API_KEY:-}
+      CRYPTOMUS_MERCHANT_UUID: ${CRYPTOMUS_MERCHANT_UUID:-}
+      CRYPTOMUS_PAYMENT_UUID: ${CRYPTOMUS_PAYMENT_UUID:-}
+      CRYPTOMUS_WEBHOOK_SECRET: ${CRYPTOMUS_WEBHOOK_SECRET:-}
+    networks:
+      - hustle-network
+
+volumes:
+  mysql_data:
+
+networks:
+  hustle-network:
