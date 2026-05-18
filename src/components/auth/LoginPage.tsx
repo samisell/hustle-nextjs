@@ -12,9 +12,10 @@ import { useAuthStore } from '@/store/auth';
 interface LoginPageProps {
   onBack: () => void;
   onSwitchToRegister: () => void;
+  onVerificationRequired: (email: string, initialOtp?: string) => void;
 }
 
-export default function LoginPage({ onBack, onSwitchToRegister }: LoginPageProps) {
+export default function LoginPage({ onBack, onSwitchToRegister, onVerificationRequired }: LoginPageProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -37,6 +38,10 @@ export default function LoginPage({ onBack, onSwitchToRegister }: LoginPageProps
       const data = await res.json();
 
       if (!res.ok) {
+        if (data.requiresVerification) {
+          onVerificationRequired(data.email || email, data._debug_otp);
+          return;
+        }
         setError(data.error || 'Login failed. Please check your credentials.');
         return;
       }

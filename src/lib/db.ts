@@ -1,13 +1,10 @@
 import { PrismaMariaDb } from '@prisma/adapter-mariadb'
 import { PrismaPlanetScale } from '@prisma/adapter-planetscale'
 import { PrismaClient } from '@prisma/client'
+import { getRequiredDatabaseUrl } from '@/lib/database-url'
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
-}
-
-if (!process.env.DATABASE_URL) {
-  throw new Error('DATABASE_URL must be set')
 }
 
 function shouldUsePlanetScaleAdapter(databaseUrl: string): boolean {
@@ -32,7 +29,7 @@ function createMysqlAdapter(databaseUrl: string) {
   })
 }
 
-const databaseUrl = process.env.DATABASE_URL
+const databaseUrl = getRequiredDatabaseUrl()
 const usePlanetScaleAdapter = shouldUsePlanetScaleAdapter(databaseUrl)
 
 const adapter = usePlanetScaleAdapter

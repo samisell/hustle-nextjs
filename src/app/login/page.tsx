@@ -19,6 +19,11 @@ export default function LoginRoutePage() {
     <LoginPage
       onBack={() => router.push('/')}
       onSwitchToRegister={() => router.push('/register')}
+      onVerificationRequired={(email, initialOtp) => {
+        const params = new URLSearchParams({ email });
+        if (initialOtp) params.set('otp', initialOtp);
+        router.push(`/verify-otp?${params.toString()}`);
+      }}
     />
   );
 }

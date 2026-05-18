@@ -34,5 +34,5 @@ USER nextjs
 
 EXPOSE 3000
 
-# Sync the schema, then start the standalone Next.js server
-CMD ["sh", "-c", "node node_modules/prisma/build/index.js db push --skip-generate && node .next/standalone/server.js"]
+# Start the standalone Next.js server
+CMD ["node", ".next/standalone/server.js"]

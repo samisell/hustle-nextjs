@@ -7,14 +7,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { useAuthStore } from '@/store/auth';
 
 interface RegisterPageProps {
   onBack: () => void;
   onSwitchToLogin: () => void;
+  onVerificationRequired: (email: string, initialOtp?: string) => void;
 }
 
-export default function RegisterPage({ onBack, onSwitchToLogin }: RegisterPageProps) {
+export default function RegisterPage({ onBack, onSwitchToLogin, onVerificationRequired }: RegisterPageProps) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -23,8 +23,6 @@ export default function RegisterPage({ onBack, onSwitchToLogin }: RegisterPagePr
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const login = useAuthStore((s) => s.login);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -60,8 +58,12 @@ export default function RegisterPage({ onBack, onSwitchToLogin }: RegisterPagePr
         return;
       }
 
-      // Auto-login on successful registration
-      login(data.user, data.token);
+      if (data.requiresVerification) {
+        onVerificationRequired(data.email || email, data._debug_otp);
+        return;
+      }
+
+      setError('Registration completed, but verification flow was not returned.');
     } catch {
       setError('Something went wrong. Please try again.');
     } finally {

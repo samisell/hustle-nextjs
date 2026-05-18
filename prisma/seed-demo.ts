@@ -1,4 +1,4 @@
-import { db } from '../src/lib/db';
+import { db } from '../src/lib/db.ts';
 import bcrypt from 'bcryptjs';
 
 const ADMIN_EMAIL = 'info.venihost@gmail.com';

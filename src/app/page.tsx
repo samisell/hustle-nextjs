@@ -11,6 +11,7 @@ import Header from '@/components/shared/Header';
 import LandingPage from '@/components/landing/LandingPage';
 import LoginPage from '@/components/auth/LoginPage';
 import RegisterPage from '@/components/auth/RegisterPage';
+import VerifyOTPPage from '@/components/auth/VerifyOTPPage';
 import DashboardOverview from '@/components/dashboard/DashboardOverview';
 import CoursesPage from '@/components/dashboard/CoursesPage';
 import ReferralsPage from '@/components/dashboard/ReferralsPage';
@@ -25,7 +26,7 @@ import CommunityPage from '@/components/dashboard/CommunityPage';
 import ProfilePage from '@/components/dashboard/ProfilePage';
 import SettingsPage from '@/components/dashboard/SettingsPage';
 
-type AppView = 'landing' | 'login' | 'register' | 'dashboard';
+type AppView = 'landing' | 'login' | 'register' | 'verify-otp' | 'dashboard';
 
 // Use useSyncExternalStore to detect client-side mount without setState in effect
 const emptySubscribe = () => () => {};
@@ -44,6 +45,8 @@ export default function Home() {
   const [view, setView] = useState<AppView>('landing');
   const [activePage, setActivePage] = useState<Page>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState('');
+  const [pendingVerificationOtp, setPendingVerificationOtp] = useState('');
 
   // Ref to track if we've hydrated from localStorage
   const hydratedRef = useRef(false);
@@ -81,7 +84,17 @@ export default function Home() {
   // Handle login/register callbacks
   const handleLogin = useCallback(() => setView('login'), []);
   const handleRegister = useCallback(() => setView('register'), []);
+  const handleVerificationRequired = useCallback((email: string, otp?: string) => {
+    setPendingVerificationEmail(email);
+    setPendingVerificationOtp(otp || '');
+    setView('verify-otp');
+  }, []);
   const handleBack = useCallback(() => setView('landing'), []);
+  const handleVerificationBack = useCallback(() => setView('login'), []);
+  const handleVerificationComplete = useCallback(() => {
+    setPendingVerificationOtp('');
+    setView('dashboard');
+  }, []);
   const handleLogout = useCallback(() => {
     logout();
     setView('landing');
@@ -117,11 +130,34 @@ export default function Home() {
 
   // Auth pages — skip if user is already authenticated (handles login/register redirect)
   if (view === 'login' && !user) {
-    return <LoginPage onBack={handleBack} onSwitchToRegister={handleRegister} />;
+    return (
+      <LoginPage
+        onBack={handleBack}
+        onSwitchToRegister={handleRegister}
+        onVerificationRequired={handleVerificationRequired}
+      />
+    );
   }
 
   if (view === 'register' && !user) {
-    return <RegisterPage onBack={handleBack} onSwitchToLogin={handleLogin} />;
+    return (
+      <RegisterPage
+        onBack={handleBack}
+        onSwitchToLogin={handleLogin}
+        onVerificationRequired={handleVerificationRequired}
+      />
+    );
+  }
+
+  if (view === 'verify-otp' && !user && pendingVerificationEmail) {
+    return (
+      <VerifyOTPPage
+        email={pendingVerificationEmail}
+        initialOtp={pendingVerificationOtp}
+        onBack={handleVerificationBack}
+        onVerified={handleVerificationComplete}
+      />
+    );
   }
 
   // Landing page (no auth)

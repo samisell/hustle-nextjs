@@ -3,10 +3,10 @@ services:
     image: mysql:8.4
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-change-this-root-password}
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-hustle}
-      MYSQL_USER: ${MYSQL_USER:-hustle}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-change-this-db-password}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
@@ -14,36 +14,33 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
-    networks:
-      - hustle-network
 
   app:
-    image: venihost/hustle-nextjs:latest
+    image: venihost/hustle-nextjs:${IMAGE_TAG}
     restart: unless-stopped
     depends_on:
       - mysql
     ports:
-      - "${APP_PORT:-3300}:3000"
+      - "${APP_PORT}:3000"
     environment:
       NODE_ENV: production
       PORT: 3000
       NEXT_TELEMETRY_DISABLED: 1
-      DATABASE_URL: mysql://${MYSQL_USER:-hustle}:${MYSQL_PASSWORD:-change-this-db-password}@mysql:3306/${MYSQL_DATABASE:-hustle}
-      ADMIN_SETUP_SECRET: ${ADMIN_SETUP_SECRET:-change-this-admin-setup-secret}
-      JWT_SECRET: ${JWT_SECRET:-change-this-jwt-secret}
-      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3300}
-      FLUTTERWAVE_PUBLIC_KEY: ${FLUTTERWAVE_PUBLIC_KEY:-}
-      FLUTTERWAVE_SECRET_KEY: ${FLUTTERWAVE_SECRET_KEY:-}
-      FLUTTERWAVE_WEBHOOK_SECRET: ${FLUTTERWAVE_WEBHOOK_SECRET:-}
-      CRYPTOMUS_API_KEY: ${CRYPTOMUS_API_KEY:-}
-      CRYPTOMUS_MERCHANT_UUID: ${CRYPTOMUS_MERCHANT_UUID:-}
-      CRYPTOMUS_PAYMENT_UUID: ${CRYPTOMUS_PAYMENT_UUID:-}
-      CRYPTOMUS_WEBHOOK_SECRET: ${CRYPTOMUS_WEBHOOK_SECRET:-}
-    networks:
-      - hustle-network
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${MYSQL_DATABASE}
+      DB_USER: ${MYSQL_USER}
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+      ADMIN_SETUP_SECRET: ${ADMIN_SETUP_SECRET}
+      JWT_SECRET: ${JWT_SECRET}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+      FLUTTERWAVE_PUBLIC_KEY: ${FLUTTERWAVE_PUBLIC_KEY}
+      FLUTTERWAVE_SECRET_KEY: ${FLUTTERWAVE_SECRET_KEY}
+      FLUTTERWAVE_WEBHOOK_SECRET: ${FLUTTERWAVE_WEBHOOK_SECRET}
+      CRYPTOMUS_API_KEY: ${CRYPTOMUS_API_KEY}
+      CRYPTOMUS_MERCHANT_UUID: ${CRYPTOMUS_MERCHANT_UUID}
+      CRYPTOMUS_PAYMENT_UUID: ${CRYPTOMUS_PAYMENT_UUID}
+      CRYPTOMUS_WEBHOOK_SECRET: ${CRYPTOMUS_WEBHOOK_SECRET}
 
 volumes:
   mysql_data:
-
-networks:
-  hustle-network:

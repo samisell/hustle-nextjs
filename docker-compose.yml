@@ -1,7 +1,6 @@
 services:
   mysql:
     image: mysql:8.4
-    container_name: hustle-mysql
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpass}
@@ -17,10 +16,7 @@ services:
       retries: 10
 
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: hustle-app
+    image: hustle-nextjs
     restart: unless-stopped
     depends_on:
       - mysql

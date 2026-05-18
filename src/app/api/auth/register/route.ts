@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { db } from '@/lib/db';
-import { signToken, generateReferralCode } from '@/lib/auth';
+import { generateReferralCode, generateOTP, getOTPExpiry } from '@/lib/auth';
 
 const REFERRAL_BONUS = 10.0;
 
@@ -25,6 +25,8 @@ export async function POST(req: NextRequest) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const newReferralCode = generateReferralCode();
+    const otp = generateOTP();
+    const otpExpiry = getOTPExpiry();
 
     const user = await db.$transaction(async (tx) => {
       const createdUser = await tx.user.create({
@@ -34,7 +36,8 @@ export async function POST(req: NextRequest) {
           password: hashedPassword,
           referralCode: newReferralCode,
           referredBy: referralCode || null,
-          emailVerified: new Date(),
+          otpCode: otp,
+          otpExpiry,
         },
       });
 
@@ -97,7 +100,7 @@ export async function POST(req: NextRequest) {
         data: {
           userId: createdUser.id,
           title: 'Welcome to Hustle University!',
-          message: 'Your account has been created successfully. Start exploring courses and grow your hustle!',
+          message: 'Your account has been created successfully. Verify your email with the OTP code to continue.',
           type: 'info',
         },
       });
@@ -105,20 +108,14 @@ export async function POST(req: NextRequest) {
       return createdUser;
     });
 
-    // Auto-login: return token immediately
-    const token = signToken({ userId: user.id, email: user.email, role: user.role });
+    console.log(`[OTP] Verification code for ${user.email}: ${otp}`);
 
     return NextResponse.json(
       {
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          referralCode: user.referralCode,
-          emailVerified: user.emailVerified,
-        },
-        token,
+        message: 'Registration successful. Please verify your email to continue.',
+        requiresVerification: true,
+        email: user.email,
+        _debug_otp: otp,
       },
       { status: 201 }
     );

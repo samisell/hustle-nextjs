@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { db } from '@/lib/db';
-import { signToken } from '@/lib/auth';
+import { generateOTP, getOTPExpiry, signToken } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
   try {
@@ -24,6 +24,33 @@ export async function POST(req: NextRequest) {
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) {
       return NextResponse.json({ error: 'Invalid email or password.' }, { status: 401 });
+    }
+
+    if (!user.emailVerified) {
+      let otp = user.otpCode;
+      let otpExpiry = user.otpExpiry;
+
+      if (!otp || !otpExpiry || new Date(otpExpiry).getTime() <= Date.now()) {
+        otp = generateOTP();
+        otpExpiry = getOTPExpiry();
+
+        await db.user.update({
+          where: { id: user.id },
+          data: { otpCode: otp, otpExpiry },
+        });
+      }
+
+      console.log(`[OTP] Verification code for ${email}: ${otp}`);
+
+      return NextResponse.json(
+        {
+          error: 'Email not verified. Please verify your email to sign in.',
+          requiresVerification: true,
+          email: user.email,
+          _debug_otp: otp,
+        },
+        { status: 403 }
+      );
     }
 
     const token = signToken({ userId: user.id, email: user.email, role: user.role });
